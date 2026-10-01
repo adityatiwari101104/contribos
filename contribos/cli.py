@@ -100,7 +100,7 @@ def cmd_brief(args) -> int:
         except llm.LLMUnavailable as e:
             print(f"(AI summary skipped: {e})", file=sys.stderr)
     if args.out:
-        Path(args.out).write_text(out)
+        Path(args.out).write_text(out, encoding="utf-8")
         print(f"Brief written to {args.out}")
     else:
         print(out)
@@ -176,7 +176,7 @@ def cmd_record(args) -> int:
         return 2
     print(record.to_markdown(r))
     if args.html:
-        Path(args.html).write_text(record.to_html(r))
+        Path(args.html).write_text(record.to_html(r), encoding="utf-8")
         print(f"\nHTML page written to {args.html}")
     return 0
 
@@ -245,7 +245,7 @@ def cmd_check(args) -> int:
     print(check.to_markdown(items))
     if args.pr_draft:
         Path(args.pr_draft).write_text(check.pr_draft(repo, diff, similar, explanation, p, title,
-                                                      proof_result, args.ai))
+                                                      proof_result, args.ai), encoding="utf-8")
         print(f"\nPR description draft written to {args.pr_draft}")
     return 1 if any(i.level == "fail" for i in items) else 0
 
