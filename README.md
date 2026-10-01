@@ -2,6 +2,10 @@
 
 <!-- mcp-name: io.github.adityatiwari101104/contribos -->
 
+[![PyPI version](https://img.shields.io/pypi/v/contribos.svg?color=blue)](https://pypi.org/project/contribos/)
+[![Python versions](https://img.shields.io/pypi/pyversions/contribos.svg)](https://pypi.org/project/contribos/)
+[![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)](https://pypi.org/project/contribos/)
+
 **Get trusted. Get merged. Come back.** ContribOS helps new open-source contributors earn trust. It finds where you're welcome, shows how this repo wants the change done, checks that you truly understand your change, coaches you through review, and turns merged PRs into a record the next maintainer can verify.
 
 In 2026, writing code is not the hard part of contributing. AI made PRs cheap, maintainers answered with PR caps, vouch lists and AI policies, and newcomer merge rates fell. ContribOS makes your PR worth a maintainer's time. See `../plan-v4.md` and `../plan-v5-research.md` for the full reasoning.
@@ -28,7 +32,7 @@ ContribOS **never** opens PRs, posts comments or claims issues for you, and it n
 ## Install
 
 ```sh
-pip install -e .          # Python 3.10+, git. No other dependencies.
+pip install contribos     # Python 3.10+, git. Zero external dependencies.
 export GITHUB_TOKEN=...   # needed for find, claim/brief from an issue URL, review, record
 ```
 
