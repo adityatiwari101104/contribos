@@ -1,0 +1,65 @@
+{
+ "author": "newcomer",
+ "url": "https://github.com/pallets/flask/pull/0000 (example)",
+ "reviews": [
+  {
+   "state": "CHANGES_REQUESTED"
+  }
+ ],
+ "review_comments": [
+  {
+   "id": 1,
+   "user": {
+    "login": "example-maintainer",
+    "type": "User"
+   },
+   "body": "Please add a test for a prefix with a trailing slash.",
+   "path": "src/flask/sansio/blueprints.py",
+   "line": 200,
+   "created_at": "2026-09-19T10:13:35.972548Z",
+   "html_url": ""
+  },
+  {
+   "id": 2,
+   "user": {
+    "login": "newcomer",
+    "type": "User"
+   },
+   "body": "Added in abc123.",
+   "in_reply_to_id": 1,
+   "created_at": "2026-09-20T10:13:35.972600Z"
+  },
+  {
+   "id": 3,
+   "user": {
+    "login": "example-maintainer",
+    "type": "User"
+   },
+   "body": "Why strip here instead of in `register`?",
+   "path": "src/flask/sansio/blueprints.py",
+   "line": 201,
+   "created_at": "2026-09-20T10:13:35.972605Z",
+   "html_url": ""
+  },
+  {
+   "id": 4,
+   "user": {
+    "login": "example-maintainer",
+    "type": "User"
+   },
+   "body": "nit: this needs a changelog entry in CHANGES.rst",
+   "path": "CHANGES.rst",
+   "line": 1,
+   "created_at": "2026-09-20T10:13:35.972608Z",
+   "html_url": ""
+  }
+ ],
+ "issue_comments": [],
+ "check_runs": [
+  {
+   "name": "tests / 3.12",
+   "conclusion": "failure",
+   "html_url": ""
+  }
+ ]
+}

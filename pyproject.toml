@@ -1,0 +1,29 @@
+[project]
+name = "contribos"
+version = "0.2.0"
+description = "Get trusted, get merged, come back: a guide for new open-source contributors in the AI era."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["open-source", "contributors", "github", "mcp", "ai-policy", "good-first-issue", "onboarding"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development",
+]
+
+[project.urls]
+Homepage = "https://github.com/adityatiwari101104/contribos"
+Issues = "https://github.com/adityatiwari101104/contribos/issues"
+
+[project.scripts]
+contribos = "contribos.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["contribos"]
