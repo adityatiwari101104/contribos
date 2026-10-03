@@ -17,6 +17,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from . import landed
 from .github import GitHub
 
 MAINTAINER = ("OWNER", "MEMBER", "COLLABORATOR")
@@ -161,9 +162,9 @@ def repo_welcome(gh: GitHub, owner: str, name: str) -> RepoWelcome:
     outside = [p for p in closed if p.get("author_association") in ("NONE", "FIRST_TIME_CONTRIBUTOR",
                                                                     "FIRST_TIMER", "CONTRIBUTOR")]
     if len(outside) >= 5:
-        merged = sum(bool(p.get("merged_at")) for p in outside)
-        share = merged / len(outside)
-        w.signals.append(Signal(share >= 0.3, f"{merged} of the last {len(outside)} closed outside PRs were merged."))
+        total, merged, other = landed.summarize(outside, gh=gh, owner=owner, name=name)
+        share = total / len(outside)
+        w.signals.append(Signal(share >= 0.3, landed.verdict(len(outside), total, merged, other, "outside PRs")))
         if share < 0.1:
             w.welcoming = False
     elif closed:

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from contribos import agent_rules, check, mcp_server, policy, proof, setup_doctor, tone
+from contribos import agent_rules, check, landed, mcp_server, policy, proof, setup_doctor, tone
 from contribos.cli import main
 from contribos.claim import draft
 from contribos.repo import Repo
@@ -146,6 +146,36 @@ class EndToEndFixes(unittest.TestCase):
             "name": "contribos_diagnose", "arguments": {"log": "ModuleNotFoundError: No module named 'blinker'"}}})
         self.assertIn("blinker", r["result"]["content"][0]["text"])
         self.assertEqual(mcp_server._TEMPS, [])
+
+
+class Landed(unittest.TestCase):
+    PRS = [{"number": 41, "title": "fix(cluster): keep hub-only neighbours with their hub",
+            "created_at": "2020-01-01T00:00:00Z", "user": {"login": "neo"}},
+           {"number": 42, "title": "Add retry to the fetch loop", "created_at": "2020-01-01T00:00:00Z",
+            "user": {"login": "amy"}},
+           {"number": 43, "title": "Update README.md", "created_at": "2020-01-01T00:00:00Z", "user": {"login": "bo"}},
+           {"number": 44, "title": "never landed anywhere at all", "created_at": "2020-01-01T00:00:00Z",
+            "user": {"login": "cy"}},
+           {"number": 45, "title": "x", "merged_at": "2020-01-02T00:00:00Z", "created_at": "2020-01-01T00:00:00Z"}]
+
+    def test_cherry_picks_count_as_landed(self):
+        repo = make_repo({"a.txt": "1\n"})
+        commit(repo, {"a.txt": "2\n"}, "fix(cluster): keep hub-only neighbours with their hub")
+        commit(repo, {"a.txt": "3\n"}, "Retry fetches on timeout (#42)")
+        commit(repo, {"a.txt": "4\n"}, "Update README.md")  # too generic to count as #43
+        total, merged, other = landed.summarize(self.PRS, repo=repo)
+        self.assertEqual(sorted(other), [41, 42])
+        self.assertEqual((total, merged), (3, 1))
+        self.assertIn("cherry-pick", landed.verdict(5, total, merged, other, "PRs"))
+
+    def test_via_api(self):
+        class GH:
+            def get(self, path, params):
+                if params["author"] == "neo":
+                    return [{"sha": "abcdef123", "commit": {"message": "fix(cluster): keep hub-only neighbours "
+                                                                       "with their hub\n\nbody"}}]
+                return []
+        self.assertEqual(landed.via_api(GH(), "o", "r", self.PRS), {41: "abcdef1"})
 
 
 class Duplicates(unittest.TestCase):

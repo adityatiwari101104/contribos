@@ -12,6 +12,7 @@ import time
 from collections import Counter
 from dataclasses import dataclass, field
 
+from . import landed
 from .github import GitHub
 from .precedent import Change
 from .repo import Repo
@@ -317,11 +318,13 @@ def _api_signals(policy: Policy, repo: Repo, gh: GitHub) -> None:
     closed = gh.pulls(repo.owner, repo.name, "closed", 50)
     outside = [p for p in closed if p.get("author_association") in ("NONE", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER", "CONTRIBUTOR")]
     if outside:
-        merged = [p for p in outside if p.get("merged_at")]
+        total, merged, other = landed.summarize(outside, repo=repo)
+        ev = [Evidence(p["html_url"], f"closed on GitHub, landed as commit {other[p['number']]}")
+              for p in outside if p.get("number") in other][:2]
+        ev += [Evidence(p["html_url"], _quote(p["title"], 80)) for p in outside
+               if not p.get("merged_at") and p.get("number") not in other][:3 - len(ev)]
         policy.findings.append(Finding(
-            "Outside PRs",
-            f"{len(merged)} of the last {len(outside)} closed PRs from non-members were merged.",
-            [Evidence(p["html_url"], _quote(p["title"], 80)) for p in outside[:3]]))
+            "Outside PRs", landed.verdict(len(outside), total, merged, other, "PRs from non-members"), ev))
 
 
 def _is_test(path: str) -> bool:
