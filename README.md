@@ -3,6 +3,7 @@
 <!-- mcp-name: io.github.adityatiwari101104/contribos -->
 
 [![PyPI version](https://img.shields.io/pypi/v/contribos.svg?color=blue)](https://pypi.org/project/contribos/)
+[![Downloads](https://static.pepy.tech/badge/contribos)](https://pepy.tech/project/contribos)
 [![Python versions](https://img.shields.io/pypi/pyversions/contribos.svg)](https://pypi.org/project/contribos/)
 [![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)](https://pypi.org/project/contribos/)
 
