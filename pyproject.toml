@@ -3,6 +3,7 @@ name = "contribos"
 version = "0.2.1"
 description = "Get trusted, get merged, come back: a guide for new open-source contributors in the AI era."
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = []
 keywords = ["open-source", "contributors", "github", "mcp", "ai-policy", "good-first-issue", "onboarding"]
@@ -10,6 +11,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Topic :: Software Development",
 ]
