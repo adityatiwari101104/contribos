@@ -74,11 +74,17 @@ Matching against past PRs barely improves file finding, which supports the plan'
 ## Status
 
 - Tested on real repos (Flask, pytest, Ghostty): `policy`, `brief`, `claim --title`, `setup`, `check`, `bench`, `mcp`.
-- Tested with realistic fake GitHub data, but not yet against the live API (it was blocked in the build environment): `find`, `claim <url>`, `review <url>`, `record`, and the `brief` review quotes. Run them with a token before relying on them.
+- Tested against the live GitHub API: `find`, `claim <url>`, `review <url>`, `record`, and `brief` with active tokens.
 - Tested on temporary git repos: `agent-rules` (git status stays clean, the guard blocks `gh pr create`, the commit-msg hook enforces sign-off and the trailer), `check --verify-test`, `tone`, policy radar v2.
-- Tests: `python3 -m unittest discover -s tests` (40 tests).
+- Tests: `python -m unittest discover -s tests` (40 tests, CI matrix on Linux, macOS, and Windows).
 
-## Publishing (when ready)
+## Releasing
 
-- PyPI: `python -m build && twine upload dist/*` (version 0.2.1 in `pyproject.toml`).
-- MCP registry: `server.json` describes the package as `io.github.adityatiwari101104/contribos`; the `mcp-name` comment at the top of this README lets the registry verify the PyPI package. Check `server.json` against the current registry schema before publishing.
+To publish a new release to PyPI:
+
+```sh
+python -m build
+twine upload dist/*
+git tag v<version>
+git push origin v<version>
+```
