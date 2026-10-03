@@ -1,3 +1,6 @@
 __pycache__/
 *.egg-info/
 .cache/
+mcp-publisher.exe
+*.tar.gz
+my_record.html

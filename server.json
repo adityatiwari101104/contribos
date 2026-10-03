@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.adityatiwari101104/contribos",
-  "description": "Helps new open-source contributors earn maintainers' trust: repo rules and AI policy, evidence-backed issue briefs, pre-submit checks, review coaching.",
+  "description": "Help open-source contributors earn maintainer trust: repo rules, briefs, and pre-submit checks.",
   "version": "0.2.1",
   "repository": {"url": "https://github.com/adityatiwari101104/contribos", "source": "github"},
   "packages": [
