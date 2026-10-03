@@ -60,7 +60,7 @@ def _issue_text(args, repo, gh) -> tuple[str, str, str | None, dict | None]:
     """Title, body (with comments), URL and raw issue, from the API or from flags."""
     title, body, url, raw = getattr(args, "title", None), "", None, None
     if getattr(args, "body_file", None):
-        body = Path(args.body_file).read_text()
+        body = Path(args.body_file).read_text(encoding="utf-8")
     m = re.search(r"/(?:issues|pull)/(\d+)", args.target)
     if m and not title:
         url = args.target
@@ -137,7 +137,7 @@ def cmd_find(args) -> int:
 def cmd_review(args) -> int:
     read_file = None
     if args.data:
-        data = json.loads(Path(args.data).read_text())
+        data = json.loads(Path(args.data).read_text(encoding="utf-8"))
         author, url = data["author"], data.get("url", args.data)
         rc, ic, rv, checks = data.get("review_comments", []), data.get("issue_comments", []), \
             data.get("reviews", []), data.get("check_runs", [])
@@ -159,7 +159,7 @@ def cmd_review(args) -> int:
         checks = gh.check_runs(owner, name, pr["head"]["sha"])
     if args.path:
         root = Path(args.path)
-        read_file = lambda p: (root / p).read_text(errors="replace") if (root / p).is_file() else None  # noqa: E731
+        read_file = lambda p: (root / p).read_text(encoding="utf-8", errors="replace") if (root / p).is_file() else None  # noqa: E731
     items, notes = review.analyze(author, rc, ic, rv, read_file)
     print(review.to_markdown(url, items, notes, checks))
     return 0
@@ -196,7 +196,7 @@ def cmd_agent_rules(args) -> int:
 
 
 def cmd_tone(args) -> int:
-    text = Path(args.file).read_text(errors="replace")
+    text = Path(args.file).read_text(encoding="utf-8", errors="replace")
     print(tone.to_markdown(tone.check(text, args.kind)))
     return 0
 
@@ -228,7 +228,7 @@ def cmd_check(args) -> int:
     if not diff.files:
         print("No changes found against the base branch.")
         return 0
-    explanation = Path(args.explain).read_text() if args.explain else None
+    explanation = Path(args.explain).read_text(encoding="utf-8") if args.explain else None
     items, similar = check.run_checks(diff, history, p, explanation)
     title = args.title or check.current_title(repo, diff)
     for extra in (check.check_disclosure(diff, p, args.ai),
@@ -252,7 +252,7 @@ def cmd_check(args) -> int:
 
 def cmd_setup(args) -> int:
     if args.diagnose:
-        text = Path(args.diagnose).read_text(errors="replace")
+        text = Path(args.diagnose).read_text(encoding="utf-8", errors="replace")
         print(setup_doctor.diagnosis_markdown(setup_doctor.diagnose(text)))
         return 0
     if not args.repo:

@@ -30,7 +30,7 @@ def parse_repo(spec: str) -> tuple[str, str]:
 def git(repo_dir: Path, *args: str, check: bool = True) -> str:
     result = subprocess.run(
         ["git", "-C", str(repo_dir), *args],
-        capture_output=True, text=True, errors="replace",
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     if check and result.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
@@ -59,8 +59,13 @@ class Repo:
     def read(self, path: str, rev: str = "HEAD") -> str | None:
         out = subprocess.run(
             ["git", "-C", str(self.path), "show", f"{rev}:{path}"],
-            capture_output=True, text=True, errors="replace",
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
+        return out.stdout if out.returncode == 0 else None
+
+    def read_bytes(self, path: str, rev: str = "HEAD") -> bytes | None:
+        """Exact file contents at `rev`, for writing back to disk unchanged."""
+        out = subprocess.run(["git", "-C", str(self.path), "show", f"{rev}:{path}"], capture_output=True)
         return out.stdout if out.returncode == 0 else None
 
     def grep(self, pattern: str, rev: str = "HEAD", ignore_case: bool = True,
@@ -93,7 +98,7 @@ def open_repo(spec: str, update: bool = False) -> Repo:
         r = subprocess.run(
             ["git", "clone", "--quiet", "--no-checkout",
              f"https://github.com/{owner}/{name}.git", str(path)],
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
             env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},  # a missing repo must fail, not ask for a password
         )
         if r.returncode != 0:

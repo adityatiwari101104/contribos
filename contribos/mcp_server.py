@@ -26,7 +26,7 @@ _TEMPS: list[str] = []
 
 def _tmp(content: str | dict, suffix: str = ".md") -> str:
     """Agents pass text, the CLI reads files: write it to a temp file."""
-    f = tempfile.NamedTemporaryFile("w", suffix=suffix, delete=False, prefix="contribos-mcp-")
+    f = tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=suffix, delete=False, prefix="contribos-mcp-")
     f.write(json.dumps(content) if isinstance(content, dict) else content)
     f.close()
     _TEMPS.append(f.name)
@@ -176,6 +176,9 @@ def handle(msg: dict) -> dict | None:
 
 
 def serve(stdin=sys.stdin, stdout=sys.stdout) -> int:
+    for stream in (stdin, stdout):  # MCP is UTF-8 JSON; Windows consoles default to a legacy code page
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     for line in stdin:
         line = line.strip()
         if not line:

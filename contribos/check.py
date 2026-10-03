@@ -93,7 +93,7 @@ def read_diff(repo: Repo, base: str) -> DiffInfo:
         elif line.startswith("-") and not line.startswith("---"):
             minus += 1
     for f in untracked:
-        text = (repo.path / f).read_text(errors="replace") if (repo.path / f).is_file() else ""
+        text = (repo.path / f).read_text(encoding="utf-8", errors="replace") if (repo.path / f).is_file() else ""
         added[f] = text.splitlines()
         plus += len(added[f])
     log = repo.git("log", f"{base}..HEAD", "--format=%H\x1f%s\x1f%b\x1e")

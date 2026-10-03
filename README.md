@@ -8,7 +8,7 @@
 
 **Get trusted. Get merged. Come back.** ContribOS helps new open-source contributors earn trust. It finds where you're welcome, shows how this repo wants the change done, checks that you truly understand your change, coaches you through review, and turns merged PRs into a record the next maintainer can verify.
 
-In 2026, writing code is not the hard part of contributing. AI made PRs cheap, maintainers answered with PR caps, vouch lists and AI policies, and newcomer merge rates fell. ContribOS makes your PR worth a maintainer's time. See `../plan-v4.md` and `../plan-v5-research.md` for the full reasoning.
+In 2026, writing code is not the hard part of contributing. AI made PRs cheap, maintainers answered with PR caps, vouch lists and AI policies, and newcomer merge rates fell. ContribOS makes your PR worth a maintainer's time.
 
 ContribOS **never** opens PRs, posts comments or claims issues for you, and it never writes your explanation. It points, and you decide.
 
@@ -74,9 +74,9 @@ Matching against past PRs barely improves file finding, which supports the plan'
 - Tested on real repos (Flask, pytest, Ghostty): `policy`, `brief`, `claim --title`, `setup`, `check`, `bench`, `mcp`.
 - Tested with realistic fake GitHub data, but not yet against the live API (it was blocked in the build environment): `find`, `claim <url>`, `review <url>`, `record`, and the `brief` review quotes. Run them with a token before relying on them.
 - Tested on temporary git repos: `agent-rules` (git status stays clean, the guard blocks `gh pr create`, the commit-msg hook enforces sign-off and the trailer), `check --verify-test`, `tone`, policy radar v2.
-- Tests: `python3 -m unittest discover -s tests` (37 tests).
+- Tests: `python3 -m unittest discover -s tests` (40 tests).
 
 ## Publishing (when ready)
 
-- PyPI: `python -m build && twine upload dist/*` (version 0.2.0 in `pyproject.toml`).
+- PyPI: `python -m build && twine upload dist/*` (version 0.2.1 in `pyproject.toml`).
 - MCP registry: `server.json` describes the package as `io.github.adityatiwari101104/contribos`; the `mcp-name` comment at the top of this README lets the registry verify the PyPI package. Check `server.json` against the current registry schema before publishing.

@@ -17,8 +17,8 @@ def make_repo(files: dict[str, str]) -> Repo:
     root = Path(tempfile.mkdtemp(prefix="contribos-test-"))
     for path, text in files.items():
         (root / path).parent.mkdir(parents=True, exist_ok=True)
-        (root / path).write_text(text)
-    for cmd in (["init", "-q", "-b", "main"], ["add", "-A"],
+        (root / path).write_text(text, encoding="utf-8")
+    for cmd in (["init", "-q", "-b", "main"], ["config", "core.autocrlf", "false"], ["add", "-A"],
                 ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base"]):
         subprocess.run(["git", "-C", str(root), *cmd], check=True)
     return Repo("o", "r", root)
@@ -27,7 +27,7 @@ def make_repo(files: dict[str, str]) -> Repo:
 def commit(repo: Repo, files: dict[str, str], msg: str = "change") -> None:
     for path, text in files.items():
         (repo.path / path).parent.mkdir(parents=True, exist_ok=True)
-        (repo.path / path).write_text(text)
+        (repo.path / path).write_text(text, encoding="utf-8")
     subprocess.run(["git", "-C", str(repo.path), "add", "-A"], check=True)
     subprocess.run(["git", "-C", str(repo.path), "-c", "user.name=t", "-c", "user.email=t@t",
                     "commit", "-qm", msg], check=True)
@@ -93,6 +93,19 @@ class Proof(unittest.TestCase):
         res = proof.verify(repo, base, ["src/app.py"], f"{sys.executable} tests/test_app.py")
         self.assertTrue(res.proves)
         self.assertIn("a + b", (repo.path / "src/app.py").read_text())  # restored
+
+    def test_swap_is_byte_exact(self):
+        base_bytes = "# café\r\nx = 1\r\n".encode("utf-8")
+        repo = make_repo({"README": "r\n"})
+        (repo.path / "m.py").write_bytes(base_bytes)
+        commit(repo, {}, "base")
+        base = repo.git("rev-parse", "HEAD").strip()
+        commit(repo, {"m.py": "x = 2\n"})
+        check_cmd = (f"{sys.executable} -c \"import sys; "
+                     f"sys.exit(0 if open('m.py','rb').read() != {base_bytes!r} else 3)\"")
+        res = proof.verify(repo, base, ["m.py"], check_cmd)
+        self.assertEqual(res.without_fix, 3)  # base version written back byte for byte
+        self.assertEqual((repo.path / "m.py").read_text(encoding="utf-8"), "x = 2\n")
 
     def test_test_that_always_passes_proves_nothing(self):
         repo = make_repo({"src/app.py": "x = 1\n", "t.py": "pass\n"})
@@ -204,7 +217,7 @@ class AgentRules(unittest.TestCase):
         self.assertIn(".claude/skills/contribos/SKILL.md", written)
         status = repo.git("status", "--short")
         self.assertEqual(status.strip(), "")  # nothing leaks into the contribution
-        skill = (repo.path / ".claude/skills/contribos/SKILL.md").read_text()
+        skill = (repo.path / ".claude/skills/contribos/SKILL.md").read_text(encoding="utf-8")
         self.assertIn("Never open pull requests", skill)
         self.assertIn("Assisted-By", skill)
         guard = subprocess.run([sys.executable, str(repo.path / ".contribos/guard.py")],

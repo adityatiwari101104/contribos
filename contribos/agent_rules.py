@@ -15,6 +15,7 @@ None of these files are part of your contribution: they're added to
 from __future__ import annotations
 
 import json
+import os
 import stat
 from pathlib import Path
 
@@ -25,7 +26,7 @@ GUARD = '''#!/usr/bin/env python3
 """ContribOS guard: stop the coding agent from acting publicly on its own."""
 import json, re, sys
 
-data = json.load(sys.stdin)
+data = json.loads(sys.stdin.buffer.read().decode("utf-8", "replace"))
 cmd = (data.get("tool_input") or {}).get("command", "")
 if re.search(r"\\bgh\\s+(pr\\s+(create|comment|review|merge|edit|ready|close|reopen)|"
              r"issue\\s+(create|comment|edit|close|reopen)|"
@@ -109,40 +110,41 @@ def install(root: Path, policy: Policy, setup: SetupPlan | None, ai_note: str | 
     text = skill_text(policy, setup)
     for d in (root / ".claude/skills/contribos", root / ".agents/skills/contribos"):
         d.mkdir(parents=True, exist_ok=True)
-        (d / "SKILL.md").write_text(text)
+        (d / "SKILL.md").write_text(text, encoding="utf-8", newline="\n")
         written.append((d / "SKILL.md").relative_to(root).as_posix())
 
     guard = root / ".contribos/guard.py"
     guard.parent.mkdir(exist_ok=True)
-    guard.write_text(GUARD)
+    guard.write_text(GUARD, encoding="utf-8", newline="\n")
     guard.chmod(guard.stat().st_mode | stat.S_IEXEC)
     written.append(".contribos/guard.py")
     settings_path = root / ".claude/settings.local.json"
-    settings = json.loads(settings_path.read_text()) if settings_path.exists() else {}
+    settings = json.loads(settings_path.read_text(encoding="utf-8")) if settings_path.exists() else {}
     hooks = settings.setdefault("hooks", {}).setdefault("PreToolUse", [])
-    entry = {"matcher": "Bash", "hooks": [{"type": "command", "command": "python3 .contribos/guard.py"}]}
+    python = "python" if os.name == "nt" else "python3"  # Windows installs rarely have python3 on PATH
+    entry = {"matcher": "Bash", "hooks": [{"type": "command", "command": f"{python} .contribos/guard.py"}]}
     if entry not in hooks:
         hooks.append(entry)
-    settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+    settings_path.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8", newline="\n")
     written.append(".claude/settings.local.json")
 
     s = structured(policy)
     git_dir = root / ".git"
     if git_dir.is_dir():
         hook = git_dir / "hooks" / "commit-msg"
-        target = hook if not hook.exists() or "ContribOS" in hook.read_text() else hook.with_name("commit-msg.contribos")
-        target.write_text(COMMIT_MSG.format(dco=DCO_CHECK if s["dco"] else "", trailer=s["ai"]["disclosure_trailer"] or ""))
+        target = hook if not hook.exists() or "ContribOS" in hook.read_text(encoding="utf-8") else hook.with_name("commit-msg.contribos")
+        target.write_text(COMMIT_MSG.format(dco=DCO_CHECK if s["dco"] else "", trailer=s["ai"]["disclosure_trailer"] or ""), encoding="utf-8", newline="\n")
         target.chmod(target.stat().st_mode | stat.S_IEXEC)
         written.append(target.relative_to(root).as_posix())
         marker = git_dir / "contribos-ai-used"
         if ai_note:
-            marker.write_text(ai_note + "\n")
+            marker.write_text(ai_note + "\n", encoding="utf-8", newline="\n")
         exclude = git_dir / "info" / "exclude"
         exclude.parent.mkdir(exist_ok=True)
-        current = exclude.read_text() if exclude.exists() else ""
+        current = exclude.read_text(encoding="utf-8") if exclude.exists() else ""
         add = [p for p in (".claude/skills/contribos/", ".agents/skills/contribos/", ".contribos/",
                            ".claude/settings.local.json") if p not in current]
         if add:
             exclude.write_text(current.rstrip("\n") + ("\n" if current else "") + "# ContribOS (local only)\n"
-                               + "\n".join(add) + "\n")
+                               + "\n".join(add) + "\n", encoding="utf-8", newline="\n")
     return written

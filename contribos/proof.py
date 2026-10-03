@@ -39,7 +39,7 @@ def _run(cmd: str, cwd: Path, timeout: int) -> tuple[int, str]:
     try:
         env = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}  # stale .pyc could hide the swap
         r = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, timeout=timeout,
-                           errors="replace", env=env)
+                           encoding="utf-8", errors="replace", env=env)
         return r.returncode, (r.stdout + r.stderr)[-3000:]
     except subprocess.TimeoutExpired:
         return 124, f"(timed out after {timeout}s)"
@@ -70,11 +70,11 @@ def verify(repo: Repo, base: str, files: list[str], cmd: str, timeout: int = 600
                 saved.append((target, copy))
             else:
                 saved.append((target, None))
-            original = repo.read(f, base)
+            original = repo.read_bytes(f, base)  # bytes: no re-encoding or newline changes
             if original is None:
                 target.unlink(missing_ok=True)  # file is new in this change
             else:
-                target.write_text(original)
+                target.write_bytes(original)
                 _touch(target)
         without_code, without_out = _run(cmd, root, timeout)
     finally:
