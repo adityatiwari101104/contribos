@@ -71,6 +71,40 @@ Optional AI summaries: `CONTRIBOS_LLM=anthropic` (with `ANTHROPIC_API_KEY`) or `
 
 Matching against past PRs barely improves file finding, which supports the plan's bet that finding files is a commodity. The value is in how past PRs did it and what reviewers asked. The next benchmark needs real issue text and review comments, which requires `GITHUB_TOKEN`.
 
+## See it work
+
+Before you open a PR, ask the repo what it expects. This is real output from `contribos policy pallets/flask`, trimmed (snapshot from 6 Oct 2026; run it yourself for current results):
+
+````text
+# Contribution policy: pallets/flask
+
+## AI policy
+No written AI policy found. Disclosing AI use is still the courteous default.
+
+## Tests
+Changes are expected to come with tests.
+- `.github/pull_request_template.md:20`: - Add tests that demonstrate the correct behavior of the change. Tests
+
+## Changelog
+Changes usually need a changelog or news entry.
+- `.github/pull_request_template.md:23`: - Add an entry in CHANGES.rst summarizing the change and linking to the issue.
+
+## Tests in practice
+50% of recent code PRs also changed tests.
+- `git history`: 19 of 38 recent code-changing PRs
+
+## Outside PRs
+2 of the last 49 closed PRs from non-members landed.
+````
+
+Every claim points at a file and line (or git history), so you can check it yourself. ContribOS points, you decide.
+
+````bash
+pip install contribos
+contribos policy pallets/flask
+````
+
+
 ## Status
 
 - Tested on real repos (Flask, pytest, Ghostty): `policy`, `brief`, `claim --title`, `setup`, `check`, `bench`, `mcp`.
