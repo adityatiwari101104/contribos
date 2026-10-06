@@ -15,7 +15,7 @@ AI tools are allowed, but you are responsible for every line you submit.
 - Disclose AI assistance in the PR description (tool name and what it helped with) and add an `Assisted-by: <tool>` line to the commit message.
 - Read, run and understand your change before opening the PR. You must be able to answer review questions yourself.
 - Write PR descriptions and comments in your own words. Run `contribos tone <file>` on them if you like.
-- Unreviewed, bulk or drive-by AI-generated PRs will be closed.
+- Bulk or unreviewed AI-generated changes are a burden on reviewers. Submit only work you have read, run and can explain.
 
 ## Development setup
 
