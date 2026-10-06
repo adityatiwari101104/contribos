@@ -52,6 +52,9 @@ def local_repo(path: str) -> Repo:
         root = Path(git(Path(path), "rev-parse", "--show-toplevel").strip())
     except RuntimeError:
         raise RuntimeError(f"{path} is not a git checkout. Run this inside your clone, or pass its path.") from None
+    if not git(root, "rev-parse", "--verify", "--quiet", "HEAD", check=False).strip():
+        raise RuntimeError(f"{root} has no commits yet. ContribOS reads repo history and rules, so "
+                           "clone an existing project (git clone <url>) or make a first commit, then try again.")
     url = git(root, "remote", "get-url", "origin", check=False).strip()
     try:
         owner, name = parse_repo(url)

@@ -45,6 +45,10 @@ def cmd_policy(args) -> int:
         print(json.dumps(policy.structured(p), indent=2))
         return 0
     print(f"# Contribution policy: {repo.slug}\n")
+    degraded = [n for n in p.notes if n.startswith("GitHub API unavailable")]
+    if degraded:
+        print("> **Partial result.** " + degraded[0] + " Pull-request signals (merge rates, review norms, "
+              "claim rules seen in PRs) are missing. Set `GITHUB_TOKEN` and re-run for the full picture.\n")
     for f in p.findings:
         print(f"## {f.topic}\n\n{f.verdict}\n")
         for e in f.evidence:
@@ -52,7 +56,8 @@ def cmd_policy(args) -> int:
         print()
     print("Docs read: " + (", ".join(f"`{d}`" for d in p.docs) or "none found"))
     for n in p.notes:
-        print(f"\n_Note: {n}_")
+        if n not in degraded:
+            print(f"\n_Note: {n}_")
     return 0
 
 
@@ -68,7 +73,8 @@ def _issue_text(args, repo, gh) -> tuple[str, str, str | None, dict | None]:
         if raw is None:
             raise SystemExit("Could not read the issue from the GitHub API"
                              + (f" ({gh.last_error})" if gh else "")
-                             + ". Set GITHUB_TOKEN, or pass --title and --body-file instead.")
+                             + ". Set GITHUB_TOKEN (unauthenticated requests are rate-limited), or pass "
+                               "--title \"...\" and --body-file issue.md and the brief runs without the API.")
         title, body = raw["title"], raw.get("body") or ""
         raw["_comments"] = gh.issue_comments(repo.owner, repo.name, int(m.group(1)))
         body += "\n" + "\n".join((c.get("body") or "")[:1000] for c in raw["_comments"][:10])

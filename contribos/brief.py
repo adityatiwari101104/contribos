@@ -116,7 +116,10 @@ def rank_precedents(terms: list[Term], history: list[Change], k: int = 8) -> lis
 
 def build(repo: Repo, title: str, body: str, history: list[Change], policy: Policy | None,
           rev: str = "HEAD", top: int = 5) -> Brief:
-    terms = extract_terms(f"{title}\n{title}\n{body}")
+    terms = extract_terms(f"{title}\n{title}\n{body}", limit=30)
+    # The repo's own name says nothing about where a change belongs: every path and file matches it.
+    own = {t.lower() for t in re.split(r"[^A-Za-z0-9]+", f"{repo.owner} {repo.name}") if len(t) > 2}
+    terms = [t for t in terms if t.text.lower() not in own][:20]
     all_files = [p for p in repo.files(rev) if not p.startswith(SKIP_DIRS)]
     candidates = [p for p in all_files if is_code(p) or is_test(p)]
     cand_set = set(candidates)
@@ -145,6 +148,9 @@ def build(repo: Repo, title: str, body: str, history: list[Change], policy: Poli
         if matched:
             h = hit(p)
             h.score += 2.0 * sum(1 for _ in matched)
+            stem = p.rsplit("/", 1)[-1].rsplit(".", 1)[0].lower()
+            if stem in {t.text.lower() for t in terms}:
+                h.score += 6.0  # the issue names this file or module outright
             h.reasons.append("path matches " + ", ".join(f"'{m}'" for m in matched[:3]))
 
     # 3. Files touched by similar past changes.
