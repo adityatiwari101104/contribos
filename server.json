@@ -2,13 +2,13 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.adityatiwari101104/contribos",
   "description": "Help open-source contributors earn maintainer trust: repo rules, briefs, and pre-submit checks.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "repository": {"url": "https://github.com/adityatiwari101104/contribos", "source": "github"},
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "contribos",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "transport": {"type": "stdio"},
       "packageArguments": [{"type": "positional", "value": "mcp"}]
     }
