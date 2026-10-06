@@ -14,6 +14,39 @@ In 2026, writing code is not the hard part of contributing. AI made PRs cheap, m
 
 ContribOS **never** opens PRs, posts comments or claims issues for you, and it never writes your explanation. It points, and you decide.
 
+## See it work
+
+Before you open a PR, ask the repo what it expects. This is real output from `contribos policy pallets/flask`, trimmed (snapshot from 6 Oct 2026; run it yourself for current results):
+
+````text
+# Contribution policy: pallets/flask
+
+## AI policy
+No written AI policy found. Disclosing AI use is still the courteous default.
+
+## Tests
+Changes are expected to come with tests.
+- `.github/pull_request_template.md:20`: - Add tests that demonstrate the correct behavior of the change. Tests
+
+## Changelog
+Changes usually need a changelog or news entry.
+- `.github/pull_request_template.md:23`: - Add an entry in CHANGES.rst summarizing the change and linking to the issue.
+
+## Tests in practice
+50% of recent code PRs also changed tests.
+- `git history`: 19 of 38 recent code-changing PRs
+
+## Outside PRs
+2 of the last 49 closed PRs from non-members landed.
+````
+
+Every claim points at a file and line (or git history), so you can check it yourself. ContribOS points, you decide.
+
+````bash
+pip install contribos
+contribos policy pallets/flask
+````
+
 ## The journey
 
 | Step | Command | What you get |
@@ -36,6 +69,7 @@ ContribOS **never** opens PRs, posts comments or claims issues for you, and it n
 ```sh
 pip install contribos     # Python 3.10+, git. Zero external dependencies.
 export GITHUB_TOKEN=...   # needed for find, claim/brief from an issue URL, review, record
+`policy` also runs without a token, but it skips pull-request signals and says so at the top of its output.
 ```
 
 Everything that can run offline does: `policy`, `brief --title`, `claim --title`, `setup`, `check`, `bench` and `review --data` need only `git`. Add `--offline` to skip the API, and `--update` to fetch new commits. Clones and indexes are cached in `~/.cache/contribos` (`CONTRIBOS_CACHE`).
@@ -71,38 +105,13 @@ Optional AI summaries: `CONTRIBOS_LLM=anthropic` (with `ANTHROPIC_API_KEY`) or `
 
 Matching against past PRs barely improves file finding, which supports the plan's bet that finding files is a commodity. The value is in how past PRs did it and what reviewers asked. The next benchmark needs real issue text and review comments, which requires `GITHUB_TOKEN`.
 
-## See it work
+## Contributing
 
-Before you open a PR, ask the repo what it expects. This is real output from `contribos policy pallets/flask`, trimmed (snapshot from 6 Oct 2026; run it yourself for current results):
+Contributions are welcome, including for Hacktoberfest. Start with issues labelled `good first issue`, comment on one to claim it, and read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers claiming an issue, disclosing AI use, and running the tests. To see these rules the way ContribOS reads them:
 
-````text
-# Contribution policy: pallets/flask
-
-## AI policy
-No written AI policy found. Disclosing AI use is still the courteous default.
-
-## Tests
-Changes are expected to come with tests.
-- `.github/pull_request_template.md:20`: - Add tests that demonstrate the correct behavior of the change. Tests
-
-## Changelog
-Changes usually need a changelog or news entry.
-- `.github/pull_request_template.md:23`: - Add an entry in CHANGES.rst summarizing the change and linking to the issue.
-
-## Tests in practice
-50% of recent code PRs also changed tests.
-- `git history`: 19 of 38 recent code-changing PRs
-
-## Outside PRs
-2 of the last 49 closed PRs from non-members landed.
-````
-
-Every claim points at a file and line (or git history), so you can check it yourself. ContribOS points, you decide.
-
-````bash
-pip install contribos
-contribos policy pallets/flask
-````
+```sh
+contribos policy adityatiwari101104/contribos
+```
 
 
 ## Status
@@ -110,15 +119,19 @@ contribos policy pallets/flask
 - Tested on real repos (Flask, pytest, Ghostty): `policy`, `brief`, `claim --title`, `setup`, `check`, `bench`, `mcp`.
 - Tested against the live GitHub API on 2026-10-01: `find` (scored issue takeability and maintainer response medians on `maximilianfeix/proxy-scraper` and `brekkylab/backlot`), `claim <url>` (drafted pre-coding proposals with past similar PRs and file targets), and `record` (verified public merged PR portfolio for `@adityatiwari101104`).
 - Tested on temporary git repos: `agent-rules` (git status stays clean, the guard blocks `gh pr create`, the commit-msg hook enforces sign-off and the trailer), `check --verify-test`, `tone`, policy radar v2.
-- Tests: `python -m unittest discover -s tests` (40 tests, CI matrix on Linux, macOS, and Windows).
+- Tests: `python -m unittest discover -s tests` (42 tests, CI matrix on Linux, macOS, and Windows).
 
 ## Releasing
 
-To publish a new release to PyPI:
+1. Bump the version in `pyproject.toml`, `contribos/__init__.py` and both places in `server.json`.
+2. Run `python -m unittest discover -s tests`, then commit and push.
+3. Tag and publish:
 
 ```sh
-python -m build
-twine upload dist/*
 git tag v<version>
 git push origin v<version>
+python -m build
+twine upload dist/*
+mcp-publisher login github
+mcp-publisher publish
 ```
