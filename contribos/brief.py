@@ -183,15 +183,24 @@ def build(repo: Repo, title: str, body: str, history: list[Change], policy: Poli
         if len(lookalikes) >= 3:
             break
 
-    scope_hint = None
-    sizes = sorted(len([f for f in c.files if is_code(f)]) for _, c in precedents[:5] if c.files)
-    if sizes:
-        median = sizes[len(sizes) // 2]
-        scope_hint = (f"Similar past changes touched a median of {median} code file"
-                      f"{'s' if median != 1 else ''}. If yours grows well past that, expect questions about scope.")
+    scope_hint = _scope_hint_from_sizes(precedents)
 
     return Brief(repo.slug, title, terms, code, tests, precedents[:5], lookalikes,
                  _questions(policy, precedents, scope_hint), scope_hint)
+
+
+def _scope_hint_from_sizes(precedents: list) -> str | None:
+    """Return a scope hint string if there are >= 3 precedents with file data, else None."""
+    sized = [(slug, c) for slug, c in precedents[:5] if c.files]
+    sizes = sorted(len([f for f in c.files if is_code(f)]) for _, c in sized)
+    if len(sizes) < 3:
+        return None
+    median = sizes[len(sizes) // 2]
+    count = len(sizes)
+    return (f"Similar past changes touched a median of {median} code file"
+            f"{'s' if median != 1 else ''}"
+            f" (based on {count} similar change{'s' if count != 1 else ''})."
+            f" If yours grows well past that, expect questions about scope.")
 
 
 def _related_tests(code: list[FileHit], ranked: list[FileHit], history: list[Change]) -> list[FileHit]:
