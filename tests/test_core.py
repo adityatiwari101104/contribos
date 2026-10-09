@@ -67,7 +67,6 @@ class ScopeHint(unittest.TestCase):
             ["src/a.py", "src/b.py"],
             ["src/c.py"],
         ])
-        from contribos.brief import build as _build  # noqa: import guard
         # We test the helper directly
         hint = _scope_hint_from_sizes(precedents)
         self.assertIsNone(hint)
