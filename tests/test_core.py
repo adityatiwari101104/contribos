@@ -1,8 +1,8 @@
 import unittest
 
-from contribos.brief import extract_terms
+from contribos.brief import extract_terms, _scope_hint_from_sizes
 from contribos.policy import is_code, is_test
-from contribos.precedent import parse_log
+from contribos.precedent import Change, parse_log
 from contribos.repo import parse_repo
 
 REC, UNIT = "\x1e", "\x1f"
@@ -10,6 +10,15 @@ REC, UNIT = "\x1e", "\x1f"
 
 def rec(sha, subject, body="", files=()):
     return f"{REC}{sha}{UNIT}1700000000{UNIT}alice{UNIT}{subject}{UNIT}{body}\x1d\n" + "\n".join(files)
+
+
+def _make_precedents(file_lists):
+    """Build a list of (score, Change) tuples for scope hint testing."""
+    result = []
+    for i, files in enumerate(file_lists):
+        c = Change(sha=f"s{i}", date=1700000000, author="a", title="t", body="", pr=None, files=files)
+        result.append((1.0, c))
+    return result
 
 
 class ParseRepo(unittest.TestCase):
@@ -47,6 +56,47 @@ class FileKinds(unittest.TestCase):
         self.assertFalse(is_code("tests/test_app.py"))
         self.assertTrue(is_code("src/flask/app.py"))
         self.assertFalse(is_code("README.md"))
+
+
+class ScopeHint(unittest.TestCase):
+    """Issue #5: scope hint should only appear when backed by >= 3 precedents."""
+
+    def test_no_hint_with_fewer_than_3_precedents(self):
+        """With 2 similar past changes, scope_hint must be None."""
+        precedents = _make_precedents([
+            ["src/a.py", "src/b.py"],
+            ["src/c.py"],
+        ])
+        # We test the helper directly
+        hint = _scope_hint_from_sizes(precedents)
+        self.assertIsNone(hint)
+
+    def test_no_hint_with_zero_precedents(self):
+        """With no similar past changes, scope_hint must be None."""
+        hint = _scope_hint_from_sizes([])
+        self.assertIsNone(hint)
+
+    def test_hint_with_3_or_more_precedents(self):
+        """With 3 similar past changes, hint appears and mentions the count."""
+        precedents = _make_precedents([
+            ["src/a.py", "src/b.py"],
+            ["src/c.py", "src/d.py", "src/e.py"],
+            ["src/f.py"],
+        ])
+        hint = _scope_hint_from_sizes(precedents)
+        self.assertIsNotNone(hint)
+        self.assertIn("based on 3 similar changes", hint)
+
+    def test_hint_with_exactly_3_precedents_shows_median(self):
+        """Median of [1, 2, 3] sorted is 2; hint text must reflect that."""
+        precedents = _make_precedents([
+            ["src/a.py"],
+            ["src/b.py", "src/c.py"],
+            ["src/d.py", "src/e.py", "src/f.py"],
+        ])
+        hint = _scope_hint_from_sizes(precedents)
+        self.assertIsNotNone(hint)
+        self.assertIn("median of 2 code files", hint)
 
 
 if __name__ == "__main__":
