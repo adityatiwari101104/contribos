@@ -28,13 +28,21 @@ DOC_PATTERNS = [
 ]
 TRUST_LISTS = [r"(^|/)vouched\.td$", r"(^|/)vouch(ed)?(\.\w+)?$"]
 CODEOWNERS = r"(^|/)codeowners$"
+# "We are not accepting contributions", "Pull requests are turned off". Conditional rules
+# ("we don't accept PRs without tests") are excluded by the negative lookahead.
+NOT_ACCEPTING = re.compile(
+    r"\b(?:(?:are|is) not (?:currently )?accepting|(?:(?:do|does|will) not|don'?t|doesn'?t|won'?t) (?:currently )?accept|"
+    r"no longer accept(?:s|ing)?|not open to)\s+(?:any\s+)?(?:outside |external |community |new |code )?"
+    r"(?:contributions|pull requests|PRs)\b(?!\s+(?:without|that|which|unless|if|for|from)\b)"
+    r"|\bpull requests (?:are|have been) (?:turned off|disabled)\b", re.I)
 
 AI_WORDS = re.compile(
     r"\b(AI|A\.I\.|LLMs?|ChatGPT|GPT-?\d?|Copilot|Claude|Gemini|Cursor|"
     r"generative|AI[- ]generated|machine[- ]generated|language models?)\b")
 RULES = {
     "ai_ban": re.compile(r"\b(prohibit|forbid|ban(ned)?|not (be )?(accept|allow|permit)|"
-                         r"do not (use|submit)|(must|should|may) not (be )?used?|never use|no (AI|LLM)|will be (closed|rejected))", re.I),
+                         r"do not (use|submit)|(must|should|may) not (be )?used?|never use|will be (closed|rejected)|"
+                         r"no (AI|LLM)s?(?![- ](tools?|assistance|was|were|is|has been)\b))", re.I),
     "ai_disclose": re.compile(r"\b(disclos|declare|must (state|mention|note)|label|indicate)", re.I),
     "ai_understand": re.compile(r"\b(understand|responsib|review(ed)? (it|them|the output)|"
                                 r"human[- ]in[- ]the[- ]loop|able to explain)", re.I),
@@ -141,6 +149,15 @@ def analyze(repo: Repo, history: list[Change], rev: str = "HEAD",
         ev = [Evidence(f"{p}:{i}", _quote(l)) for p, i, l in ai_lines[:2]]
     ev += [Evidence(p, "dedicated AI policy file") for p in ai_files]
     policy.findings.append(Finding("AI policy", verdict, ev[:4]))
+
+    closed = [Evidence(f"{path}:{i}", _quote(line)) for path, i, line in _scan(repo, rev, docs)
+              if NOT_ACCEPTING.search(re.sub(r"[*_`]", "", line))]
+    if closed:
+        policy.findings.insert(0, Finding(
+            "Not accepting contributions",
+            "This repo says it does not take outside pull requests right now. "
+            "Open an issue or discussion instead of a PR.",
+            closed[:2]))
 
     trust = [p for p in files if _match_any(p, TRUST_LISTS)]
     if trust:
@@ -289,6 +306,7 @@ def structured(policy: Policy) -> dict:
         "dco": policy.get("Sign-off (DCO)") is not None,
         "cla": policy.get("CLA") is not None,
         "archived": policy.get("Archived") is not None,
+        "accepting_contributions": policy.get("Not accepting contributions") is None,
         "findings": [{"topic": f.topic, "verdict": f.verdict,
                       "evidence": [{"source": e.source, "quote": e.quote} for e in f.evidence]}
                      for f in policy.findings],
