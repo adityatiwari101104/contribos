@@ -119,7 +119,7 @@ contribos policy adityatiwari101104/contribos
 - Tested on real repos (Flask, pytest, Ghostty): `policy`, `brief`, `claim --title`, `setup`, `check`, `bench`, `mcp`.
 - Tested against the live GitHub API on 2026-10-01: `find` (scored issue takeability and maintainer response medians on `maximilianfeix/proxy-scraper` and `brekkylab/backlot`), `claim <url>` (drafted pre-coding proposals with past similar PRs and file targets), and `record` (verified public merged PR portfolio for `@adityatiwari101104`).
 - Tested on temporary git repos: `agent-rules` (git status stays clean, the guard blocks `gh pr create`, the commit-msg hook enforces sign-off and the trailer), `check --verify-test`, `tone`, policy radar v2.
-- Tests: `python -m unittest discover -s tests` (42 tests, CI matrix on Linux, macOS, and Windows).
+- Tests: `python -m unittest discover -s tests` (59 tests, CI matrix on Linux, macOS, and Windows).
 
 ## Releasing
 

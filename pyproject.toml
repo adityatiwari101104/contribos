@@ -1,6 +1,6 @@
 [project]
 name = "contribos"
-version = "0.2.2"
+version = "0.2.3"
 description = "Get trusted, get merged, come back: a guide for new open-source contributors in the AI era."
 readme = "README.md"
 license = {text = "MIT"}
