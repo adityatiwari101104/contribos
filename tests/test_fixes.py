@@ -85,3 +85,92 @@ class NotAcceptingContributions(unittest.TestCase):
         p = _policy_for({"CONTRIBUTING.md": "We don't accept PRs without tests.\n"
                                             "We do not accept pull requests that only change formatting.\n"})
         self.assertIsNone(p.get("Not accepting contributions"))
+
+
+# curl/curl .github/pull_request_template.md at 70c084a01, verbatim.
+CURL_TEMPLATE = """<!--
+        IMPORTANT:
+        If you cannot understand or explain your work without using
+        Artificial Intelligence (AI) then do not file here. Do not paste
+        massive AI generated explanations. We accept the use of AI as long as
+        it is digestible. Please explain your issues or improvements briefly
+        and clearly in your own human voice.
+-->
+"""
+
+
+class MultilineAiPolicy(unittest.TestCase):
+    """Issue #9: wrapped contributor instructions retain their source lines."""
+
+    def ai(self, text):
+        return _policy_for({".github/pull_request_template.md": text}).get("AI policy")
+
+    def test_curl_actual_policy_is_responsibility_not_a_ban(self):
+        finding = self.ai(CURL_TEMPLATE)
+        self.assertEqual(finding.verdict,
+                         "Allows AI help if you understand and take responsibility for the change.")
+        self.assertEqual(len(finding.evidence), 1)
+        evidence = finding.evidence[0]
+        self.assertEqual(evidence.source, ".github/pull_request_template.md:3-4")
+        self.assertEqual(evidence.quote,
+                         "If you cannot understand or explain your work without using "
+                         "Artificial Intelligence (AI) then do not file here.")
+        self.assertIn(evidence.quote, " ".join(
+            line.strip() for line in CURL_TEMPLATE.splitlines()[2:4]))
+
+    def test_wrapped_comment_and_source_range(self):
+        text = ("# Pull request\n\n<!--\n"
+                "If you use AI tools to prepare your contribution,\n"
+                "you must understand and be able to explain the change\n"
+                "in your own voice.\n-->\n")
+        finding = self.ai(text)
+        self.assertIn("responsibility", finding.verdict)
+        evidence = finding.evidence[0]
+        self.assertEqual(evidence.source, ".github/pull_request_template.md:4-6")
+        quoted = " ".join(text.splitlines()[3:6])
+        self.assertEqual(evidence.quote, quoted[:159] + "…" if len(quoted) > 160 else quoted)
+
+    def test_wrapped_markdown_requirement(self):
+        finding = self.ai("If you use AI for contributions, you must\nunderstand the changes.\n")
+        self.assertIn("responsibility", finding.verdict)
+        self.assertEqual(finding.evidence[0].source, ".github/pull_request_template.md:1-2")
+        self.assertEqual(finding.evidence[0].quote,
+                         "If you use AI for contributions, you must understand the changes.")
+
+    def test_own_voice_requirement(self):
+        self.assertIn("responsibility", self.ai(
+            "If you use AI, explain the changes in your own voice.\n").verdict)
+
+    def test_own_human_voice_requirement(self):
+        finding = self.ai("If you use AI, please explain the changes in your own human voice.")
+        self.assertIn("responsibility", finding.verdict)
+        self.assertEqual(finding.evidence[0].source, ".github/pull_request_template.md:1")
+
+    def test_unpunctuated_unrelated_lines(self):
+        finding = self.ai("AI tools are useful\nYou must understand the build system\n")
+        self.assertEqual(finding.verdict,
+                         "Mentions AI but states no clear rule. Disclose AI use to be safe.")
+
+    def test_single_line_rules(self):
+        for text, verdict in (("You must understand AI-assisted changes.", "responsibility"),
+                              ("You must disclose AI assistance.", "disclose it"),
+                              ("Do not submit AI-generated contributions.", "Restricts")):
+            with self.subTest(text=text):
+                self.assertIn(verdict, self.ai(text).verdict)
+
+    def test_wrapped_ban_and_disclosure(self):
+        for text, verdict in (("AI-generated contributions\nare banned.", "Restricts"),
+                              ("You must disclose\nAI assistance.", "disclose it")):
+            with self.subTest(text=text):
+                self.assertIn(verdict, self.ai(text).verdict)
+
+    def test_mentions_and_unrelated_statements(self):
+        for text in ("This documentation mentions AI tools.\n",
+                     "AI tools are useful.\nYou must understand the build system.\n",
+                     "AI tools are useful\n\nYou must understand the build system.\n",
+                     "AI tools are useful\n# Development\nYou must understand the build system.\n",
+                     "- AI tools are useful\n- You must understand the build system.\n",
+                     "<!-- AI tools are useful -->\nYou must understand the build system.\n",
+                     "Researchers study AI to\nunderstand language models.\n"):
+            with self.subTest(text=text):
+                self.assertTrue(self.ai(text).verdict.startswith("Mentions AI"))
