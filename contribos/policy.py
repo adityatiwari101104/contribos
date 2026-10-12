@@ -45,7 +45,8 @@ RULES = {
                          r"no (AI|LLM)s?(?![- ](tools?|assistance|was|were|is|has been)\b))", re.I),
     "ai_disclose": re.compile(r"\b(disclos|declare|must (state|mention|note)|label|indicate)", re.I),
     "ai_understand": re.compile(r"\b(understand|responsib|review(ed)? (it|them|the output)|"
-                                r"human[- ]in[- ]the[- ]loop|able to explain)", re.I),
+                                r"human[- ]in[- ]the[- ]loop|able to explain|"
+                                r"explain.{0,40}your own (words|(?:human )?voice))", re.I),
     "claim": re.compile(r"\b(get assigned|assign(ed)? to you|claim|comment on the issue|"
                         r"before (you )?(start|begin|work)|open an issue first|discuss (it |this )?"
                         r"(first|before)|wait for (a )?maintainer)", re.I),
@@ -107,6 +108,36 @@ def _quote(line: str, limit: int = 160) -> str:
     return line if len(line) <= limit else line[: limit - 1] + "…"
 
 
+def _ai_sentences(repo: Repo, rev: str, paths: list[str]):
+    """Join wrapped sentences, retaining their source range and Markdown boundaries."""
+    for path in paths:
+        pending: list[tuple[int, str]] = []
+
+        def sentences():
+            text = "\n".join(line for _, line in pending)
+            for match in re.finditer(r"\S[\s\S]*?(?:[.!?](?=\s|$)|$)", text):
+                start = text[:match.start()].count("\n")
+                end = text[:match.end()].count("\n")
+                yield path, pending[start][0], pending[end][0], match.group().strip()
+
+        for i, raw in enumerate((repo.read(path, rev) or "").splitlines(), 1):
+            # Comments contain contributor instructions, but never bridge their edges.
+            parts = re.split(r"(<!--|-->)", raw)
+            for part in parts:
+                line = part.strip()
+                label = re.fullmatch(r"[A-Z][A-Z ]*:", line)
+                boundary = line in ("<!--", "-->") or not line or re.match(
+                    r"^(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|```|~~~)", line) or label
+                if boundary and pending:
+                    yield from sentences()
+                    pending.clear()
+                if line and not label and line not in ("<!--", "-->") and not re.match(
+                        r"^(?:#{1,6}\s|```|~~~)", line):
+                    pending.append((i, line))
+        if pending:
+            yield from sentences()
+
+
 def analyze(repo: Repo, history: list[Change], rev: str = "HEAD",
             gh: GitHub | None = None) -> Policy:
     files = repo.files(rev)
@@ -128,8 +159,30 @@ def analyze(repo: Repo, history: list[Change], rev: str = "HEAD",
     # AI policy: only judge lines that actually talk about AI.
     for path, i, line in ai_lines:
         for key in ("ai_ban", "ai_disclose", "ai_understand"):
+            if key == "ai_understand" and not re.search(
+                    r"\b(you|your|contributors?|contributions?|must|should|required|responsib|human[- ]in[- ]the[- ]loop)",
+                    line, re.I):
+                continue
             if RULES[key].search(line) and len(hits[key]) < 3:
                 hits[key].append(Evidence(f"{path}:{i}", _quote(line)))
+    # A requirement can be wrapped onto the next line, including inside comments.
+    # Match sentences rather than whole blocks so unrelated statements stay separate.
+    for path, start, end, sentence in _ai_sentences(repo, rev, docs):
+        # A bare AI mention must not borrow contributor context from another line.
+        ai_context = any(AI_WORDS.search(line) and re.search(
+            r"\b(you|your|contributors?|contributions?)\b", line, re.I)
+            for line in sentence.splitlines()) or re.match(r"(?:if|when) you\b", sentence, re.I)
+        sentence = re.sub(r"\s+", " ", sentence)
+        if start == end or not AI_WORDS.search(sentence):
+            continue
+        if not re.search(r"\b(you|your|contributors?|contributions?|must|should|required)\b",
+                         sentence, re.I):
+            continue
+        for key in ("ai_ban", "ai_disclose", "ai_understand"):
+            if key == "ai_understand" and not ai_context:
+                continue
+            if RULES[key].search(sentence) and len(hits[key]) < 3:
+                hits[key].append(Evidence(f"{path}:{start}-{end}", _quote(sentence)))
     ai_files = [p for p in docs if re.search(r"(ai|llm|genai)[-_ ]?(policy|usage)", p.lower())]
     if hits["ai_ban"] and hits["ai_disclose"]:
         verdict = ("Strict: some AI use is banned and the rest must be disclosed. "
