@@ -14,6 +14,8 @@ In 2026, writing code is not the hard part of contributing. AI made PRs cheap, m
 
 ContribOS **never** opens PRs, posts comments or claims issues for you, and it never writes your explanation. It points, and you decide.
 
+If ContribOS saved you a rejected PR, a ⭐ on this repo helps other contributors find it.
+
 ## See it work
 
 Before you open a PR, ask the repo what it expects. This is real output from `contribos policy pallets/flask`, trimmed (snapshot from 6 Oct 2026; run it yourself for current results):
