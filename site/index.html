@@ -7,8 +7,7 @@
 <meta property="og:description" content="ContribOS reads a repository's contribution rules, AI policy and history, and cites every rule by file and line, before you or your coding agent open a pull request.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<meta name="theme-color" content="#f2f3ee" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#12151c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#000000">
 <title>ContribOS</title>
 <meta name="description" content="ContribOS reads a repository's contribution rules, AI policy and history, and cites every rule by file and line, before you or your coding agent open a pull request.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,19 +16,22 @@
 <style>
 /* Layout: an annotated rulebook. Every claim on the page is a rule with a gutter citation that links to the exact source line. */
 :root {
-  --paper: #f2f3ee;
-  --sheet: #fbfbf8;
-  --ink: #1b2130;
-  --ink-soft: #565f70;
-  --rule: #d8dbd0;
-  --accent: #2741c9;
-  --accent-ink: #ffffff;
-  --mark: #f3dd6b;
-  --mark-ink: #3a3000;
-  --code-bg: #eceee6;
-  --ok: #2f7a4f;
-  --warn: #9a5a00;
-  --stop: #b2342a;
+  color-scheme: dark;
+  --paper: #000000;
+  --sheet: #0a0a0a;
+  --ink: #f5f5f5;
+  --ink-soft: #a3a3a3;
+  --rule: #262626;
+  --accent: #93a7ff;
+  --accent-ink: #0e1220;
+  --mark: #5b4f12;
+  --mark-ink: #f6e58e;
+  --hero-accent: #e9cd4a;
+  --hero-accent-ink: #000000;
+  --code-bg: #141414;
+  --ok: #6fca93;
+  --warn: #e2a64b;
+  --stop: #f08a80;
   --font-display: "Source Serif 4", "Iowan Old Style", Georgia, serif;
   --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
@@ -39,33 +41,12 @@
   --step-2: 1.5rem;
   --step-3: clamp(1.9rem, 1.4rem + 2.2vw, 3.1rem);
   --radius: 6px;
-  --glass: rgba(255, 255, 255, 0.5);
-  --glass-strong: rgba(255, 255, 255, 0.6);
-  --glass-edge: rgba(255, 255, 255, 0.75);
-  --glass-hi: rgba(255, 255, 255, 0.85);
-  --glass-ring: rgba(27, 33, 48, 0.07);
-  --glass-shadow: rgba(30, 40, 80, 0.28);
-  --blob-a: rgba(39, 65, 201, 0.24);
-  --blob-b: rgba(243, 214, 80, 0.42);
-  --blob-c: rgba(40, 160, 140, 0.2);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #12151c; --sheet: #181c25; --ink: #e6e8ee; --ink-soft: #9aa3b4; --rule: #2a303d;
-    --accent: #93a7ff; --accent-ink: #0e1220; --mark: #5b4f12; --mark-ink: #f6e58e; --code-bg: #1f2430;
-    --ok: #6fca93; --warn: #e2a64b; --stop: #f08a80; color-scheme: dark;
-    --glass: rgba(32, 38, 54, 0.45); --glass-strong: rgba(42, 48, 66, 0.55); --glass-edge: rgba(255, 255, 255, 0.1);
-    --glass-hi: rgba(255, 255, 255, 0.07); --glass-ring: rgba(0, 0, 0, 0.25); --glass-shadow: rgba(0, 0, 0, 0.6);
-    --blob-a: rgba(120, 145, 255, 0.22); --blob-b: rgba(242, 210, 75, 0.1); --blob-c: rgba(80, 200, 160, 0.13);
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #12151c; --sheet: #181c25; --ink: #e6e8ee; --ink-soft: #9aa3b4; --rule: #2a303d;
-  --accent: #93a7ff; --accent-ink: #0e1220; --mark: #5b4f12; --mark-ink: #f6e58e; --code-bg: #1f2430;
-  --ok: #6fca93; --warn: #e2a64b; --stop: #f08a80; color-scheme: dark;
-    --glass: rgba(32, 38, 54, 0.45); --glass-strong: rgba(42, 48, 66, 0.55); --glass-edge: rgba(255, 255, 255, 0.1);
-    --glass-hi: rgba(255, 255, 255, 0.07); --glass-ring: rgba(0, 0, 0, 0.25); --glass-shadow: rgba(0, 0, 0, 0.6);
-    --blob-a: rgba(120, 145, 255, 0.22); --blob-b: rgba(242, 210, 75, 0.1); --blob-c: rgba(80, 200, 160, 0.13);
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-strong: rgba(255, 255, 255, 0.06);
+  --glass-edge: rgba(255, 255, 255, 0.1);
+  --glass-hi: rgba(255, 255, 255, 0.06);
+  --glass-ring: rgba(0, 0, 0, 0.4);
+  --glass-shadow: rgba(0, 0, 0, 0.7);
 }
 
 * { box-sizing: border-box; }
@@ -79,8 +60,17 @@ p { margin: 0; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 
 /* Top bar */
-.top { border-bottom: 1px solid var(--rule); }
-.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; flex-wrap: wrap; }
+/* Floating bar: a glass pill fixed over the hero */
+.top { position: fixed; z-index: 20; top: max(12px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); width: min(1088px, calc(100% - 32px)); border-radius: 14px; }
+.top .wrap { max-width: none; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 10px 10px 18px; }
+.nav-links { display: flex; gap: 18px; align-items: center; }
+.menu-btn { display: none; width: 38px; height: 38px; border: 1px solid var(--glass-edge); border-radius: 10px; background: var(--glass-strong); color: var(--ink); cursor: pointer; padding: 0; place-items: center; }
+.menu-btn span, .menu-btn span::before, .menu-btn span::after { content: ""; display: block; width: 16px; height: 1.5px; background: currentColor; border-radius: 1px; position: relative; transition: transform 0.2s ease, background 0.2s ease; }
+.menu-btn span::before { position: absolute; top: -5px; }
+.menu-btn span::after { position: absolute; top: 5px; }
+.menu-btn[aria-expanded="true"] span { background: transparent; }
+.menu-btn[aria-expanded="true"] span::before { transform: translateY(5px) rotate(45deg); }
+.menu-btn[aria-expanded="true"] span::after { transform: translateY(-5px) rotate(-45deg); }
 .brand { font-family: var(--font-mono); font-weight: 500; font-size: var(--step-1); color: var(--ink); text-decoration: none; letter-spacing: -0.01em; }
 .brand span { color: var(--accent); }
 .nav { display: flex; gap: 18px; align-items: center; font-size: var(--step--1); flex-wrap: wrap; }
@@ -89,29 +79,71 @@ p { margin: 0; }
 .ver { font-family: var(--font-mono); font-size: 0.75rem; border: 1px solid var(--rule); border-radius: 999px; padding: 2px 9px; color: var(--ink-soft); }
 
 /* Hero */
-.hero .wrap { display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 48px; padding-block: 56px 64px; align-items: start; }
+/* Full-viewport hero. Tune per page with these properties on .hero:
+   --hero-image  background behind the scene (default: faint blueprint grid)
+   --mask-x / --mask-y  how far the edge vignette reaches in from the sides / top and bottom
+   --scale-inset  distance of the four scale lines from the hero edges; --scale-color their colour */
+.hero {
+  --hero-image: linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 32px 32px, linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 32px 32px;
+  --mask-x: 14%; --mask-y: 16%;
+  --scale-inset: max(16px, calc((100% - 1120px) / 2));
+  --scale-color: var(--rule);
+  --grid-line: color-mix(in srgb, var(--ink) 6%, transparent);
+  position: relative; isolation: isolate; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0; z-index: -2; background: var(--hero-image);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--mask-x), #000 calc(100% - var(--mask-x)), transparent), linear-gradient(transparent, #000 var(--mask-y), #000 calc(100% - var(--mask-y)), transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 var(--mask-x), #000 calc(100% - var(--mask-x)), transparent), linear-gradient(transparent, #000 var(--mask-y), #000 calc(100% - var(--mask-y)), transparent);
+  mask-composite: intersect;
+  touch-action: pan-y;
+}
+.hero-bg canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* Scrim so the bottom-anchored copy stays readable over the scene */
+.hero::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 78% 82% at 8% 100%, color-mix(in srgb, var(--paper) 74%, transparent) 0%, color-mix(in srgb, var(--paper) 54%, transparent) 55%, transparent 100%); }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-bg { animation: bg-in 1.6s cubic-bezier(.2, .7, .2, 1) 0.1s both; }
+}
+@keyframes bg-in { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+
+/* Blueprint frame: two horizontal and two vertical rules with tick marks */
+.scale { position: absolute; z-index: -1; pointer-events: none; background: var(--scale-color); }
+.scale::after { content: ""; position: absolute; }
+.scale-t, .scale-b { left: 0; right: 0; height: 1px; }
+.scale-t { top: 96px; } .scale-b { bottom: 28px; }
+.scale-l, .scale-r { top: 0; bottom: 0; width: 1px; }
+.scale-l { left: var(--scale-inset); } .scale-r { right: var(--scale-inset); }
+.scale-t::after, .scale-b::after { left: 0; right: 0; height: 6px; top: -6px; background: repeating-linear-gradient(90deg, var(--scale-color) 0 1px, transparent 1px 16px); }
+.scale-b::after { top: 1px; }
+.scale-l::after, .scale-r::after { top: 0; bottom: 0; width: 6px; background: repeating-linear-gradient(var(--scale-color) 0 1px, transparent 1px 16px); }
+.scale-l::after { left: 1px; } .scale-r::after { right: 1px; }
+
+.hero-copy { width: 100%; padding-top: 140px; padding-bottom: 64px; }
+.hero-copy > * { max-width: 40rem; }
+.hero-copy .lede { max-width: 36em; }
+
+/* Primary button with a yellow accent box holding a 5x5 dot grid */
+.btn-primary { display: inline-flex; align-items: center; gap: 14px; padding: 6px 6px 6px 18px; border-radius: 10px; background: var(--ink); color: var(--paper); text-decoration: none; font-weight: 500; font-size: 0.95rem; }
+.btn-primary:hover { color: var(--paper); }
+.dotbox { width: 34px; height: 34px; border-radius: 7px; background: var(--hero-accent); overflow: hidden; display: grid; place-items: center; flex: none; }
+.dots { width: 22px; height: 22px; background: radial-gradient(circle, var(--hero-accent-ink) 1.1px, transparent 1.4px) 0 0 / 4.4px 4.4px; transition: transform 0.5s cubic-bezier(.3, .7, .2, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  .btn-primary:hover .dots, .btn-primary:focus-visible .dots { transform: rotate(90deg) scale(1.15); animation: dot-slide 0.9s linear infinite; }
+}
+@keyframes dot-slide { to { background-position: 4.4px 4.4px; } }
 .eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 18px; }
 .hero h1 { font-size: var(--step-3); font-weight: 700; letter-spacing: -0.015em; }
 .hero h1 mark { background: linear-gradient(transparent 58%, var(--mark) 58%); color: inherit; padding: 0 2px; }
 .lede { margin-top: 20px; font-size: var(--step-1); color: var(--ink-soft); max-width: 34em; }
 .lede strong { color: var(--ink); font-weight: 600; }
 .cta { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-.install { display: flex; align-items: center; gap: 0; border: 1px solid var(--ink); border-radius: var(--radius); background: var(--sheet); overflow: hidden; max-width: 100%; }
-.install code { padding: 11px 14px; font-size: 0.95rem; white-space: nowrap; }
-.install code::before { content: "$ "; color: var(--ink-soft); }
-.copy { border: 0; border-left: 1px solid var(--ink); background: var(--ink); color: var(--paper); font: 500 var(--step--1) var(--font-body); padding: 12px 14px; cursor: pointer; min-width: 74px; }
-.copy:hover { opacity: 0.9; }
 .btn { display: inline-block; padding: 11px 16px; border-radius: var(--radius); text-decoration: none; font-weight: 500; font-size: 0.95rem; border: 1px solid var(--rule); color: var(--ink); background: transparent; }
 .btn:hover { border-color: var(--ink); }
 .never { margin-top: 26px; font-size: var(--step--1); color: var(--ink-soft); max-width: 36em; }
 
 /* 3D stage */
-.hero .wrap { align-items: center; }
-.hero .wrap.flat { grid-template-columns: minmax(0, 1fr); }
-.stage { position: relative; min-width: 0; height: 560px; touch-action: pan-y; }
-.stage canvas { position: absolute; inset: 0 0 28px 0; width: 100%; height: calc(100% - 28px); display: block; }
-.stage-cap { position: absolute; left: 0; right: 0; bottom: 0; font: 0.72rem/1.4 var(--font-mono); color: var(--ink-soft); text-align: right; }
-.stage.nogl { display: none; }
 #demo .sheet { max-width: 900px; }
 
 /* Terminal / output sheet */
@@ -148,13 +180,6 @@ section.band > .wrap { padding-block: 64px; }
 .fact span { display: block; margin-top: 10px; color: var(--ink-soft); font-size: 0.95rem; }
 
 /* Commands */
-.cmds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--rule); }
-.cmdrow { display: grid; grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr); gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--rule); min-width: 0; }
-.cmds .cmdrow:nth-child(odd) { padding-right: 28px; }
-.cmds .cmdrow:nth-child(even) { padding-left: 28px; border-left: 1px solid var(--rule); }
-.cmdrow code.name { font-weight: 500; color: var(--accent); font-size: 0.95rem; }
-.cmdrow p { color: var(--ink); }
-.cmdrow .ex { display: block; margin-top: 8px; color: var(--ink-soft); font-size: 0.8rem; overflow-x: auto; white-space: nowrap; }
 
 /* Policy table */
 .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -181,12 +206,6 @@ td.src .none { color: var(--ink-soft); font-size: 0.85rem; }
 .table-foot { margin-top: 14px; font-size: var(--step--1); color: var(--ink-soft); display: flex; gap: 8px 20px; flex-wrap: wrap; }
 
 /* Agent */
-.agent { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
-.agent p + p { margin-top: 14px; }
-.agent .ink { color: var(--ink-soft); }
-.snippet { background: var(--code-bg); border-radius: 8px; padding: 18px; font-family: var(--font-mono); font-size: 0.85rem; line-height: 1.8; overflow-x: auto; min-width: 0; }
-.snippet .c { color: var(--ink-soft); }
-.snippet .line { display: block; white-space: pre; }
 
 /* Footer */
 footer { border-top: 1px solid var(--rule); }
@@ -195,65 +214,44 @@ footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
 footer a { color: var(--ink-soft); }
 
 @media (max-width: 900px) {
-  .hero .wrap { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-block: 40px 48px; }
-  .stage { height: 440px; }
-  .stage-cap { text-align: left; }
+  .hero { --mask-x: 4%; --mask-y: 8%; }
+  .hero::after { background: color-mix(in srgb, var(--paper) 38%, transparent); }
+  .hero-copy { padding-top: 120px; padding-bottom: 52px; }
   .sec-head { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .cmds { grid-template-columns: minmax(0, 1fr); }
-  .cmds .cmdrow:nth-child(odd), .cmds .cmdrow:nth-child(even) { padding-left: 0; padding-right: 0; border-left: 0; }
-  .agent { grid-template-columns: minmax(0, 1fr); gap: 24px; }
 }
 @media (max-width: 560px) {
   .facts { grid-template-columns: minmax(0, 1fr); }
   .fact + .fact { border-left: 0; border-top: 1px solid var(--rule); }
-  .cmdrow { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .install code { font-size: 0.85rem; }
   .sheet-note { margin-left: 0; width: 100%; }
-  .stage { height: 360px; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .out .line { animation: rise 0.35s ease both; }
 }
 @keyframes rise { from { opacity: 0.35; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 
-/* Glass: soft colour fields behind frosted panels */
-body::before {
-  content: ""; position: fixed; inset: -12vmax; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(36vmax 28vmax at 76% 22%, var(--blob-a), transparent 70%),
-    radial-gradient(30vmax 26vmax at 14% 48%, var(--blob-b), transparent 70%),
-    radial-gradient(34vmax 30vmax at 58% 92%, var(--blob-c), transparent 70%);
-}
-@media (prefers-reduced-motion: no-preference) {
-  body::before { animation: drift 30s ease-in-out infinite alternate; }
-}
-@keyframes drift { to { transform: translate3d(4vmax, -3vmax, 0) rotate(8deg); } }
+/* Glass: frosted panels */
 
-.top, .install, .sheet, .facts, .table-box, .snippet, .btn, .chip-btn, .cmdrow, .ver {
+.top, .sheet, .facts, .table-box, .btn, .chip-btn, .ver {
   background: var(--glass);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid var(--glass-edge);
   box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-ring), 0 14px 34px -20px var(--glass-shadow);
 }
-.top { position: sticky; top: 0; z-index: 20; border-width: 0 0 1px; box-shadow: 0 1px 0 var(--glass-ring); }
-.install { border-radius: 10px; }
-.copy { border-left: 0; }
+.top { background: var(--glass-strong); }
 .btn { border-radius: 10px; }
 .btn:hover, .chip-btn:hover { background: var(--glass-strong); }
 .chip-btn[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.sheet, .facts, .table-box, .snippet { border-radius: 14px; }
+.sheet, .facts, .table-box { border-radius: 14px; }
 .facts { overflow: hidden; }
 .fact + .fact { border-left-color: var(--glass-edge); }
 th { background: var(--glass-strong); }
 th, td { border-bottom-color: var(--glass-edge); }
 .sheet-head { border-bottom-color: var(--glass-edge); }
-.cmds { gap: 14px; border-top: 0; }
-.cmds .cmdrow, .cmds .cmdrow:nth-child(odd), .cmds .cmdrow:nth-child(even) { padding: 22px; border-radius: 14px; border: 1px solid var(--glass-edge); }
 .out { max-height: 520px; }
 
 /* Ideas taken from the reference: contrast line, numbered cards with a small UI inside, stats strip, FAQ, quickstart */
-.step, .stat, .faq details, .start-list li {
+.card, .faq details {
   background: var(--glass);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   backdrop-filter: blur(18px) saturate(160%);
@@ -268,25 +266,43 @@ th, td { border-bottom-color: var(--glass-edge); }
 .nav .nav-cta { background: var(--ink); color: var(--paper); padding: 7px 15px; border-radius: 999px; font-weight: 500; }
 .nav .nav-cta:hover { color: var(--paper); opacity: 0.88; }
 
-.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.step { padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; transition: transform 0.25s ease, box-shadow 0.25s ease; }
-.step:hover { transform: translateY(-3px); }
 .num { font: 500 0.78rem var(--font-mono); color: var(--accent); letter-spacing: 0.08em; }
-.step h3 { font-size: var(--step-2); font-weight: 600; }
-.step > p:not(.num) { color: var(--ink-soft); }
 .mini { margin-top: auto; border-radius: 12px; background: var(--glass-strong); border: 1px solid var(--glass-edge); padding: 4px 14px; font-size: 0.88rem; }
 .mini-cap { font: 500 0.68rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); padding: 10px 0 4px; }
 .mini-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--glass-edge); }
 .mini-row small { display: block; font: 0.72rem var(--font-mono); color: var(--ink-soft); }
 .pill { font: 500 0.72rem var(--font-body); padding: 2px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid currentColor; }
-.p-info { color: var(--accent); } .p-ok { color: var(--ok); } .p-warn { color: var(--warn); } .p-stop { color: var(--stop); }
-.step code.ex { font-size: 0.78rem; color: var(--ink-soft); overflow-x: auto; white-space: nowrap; }
+.p-info { color: var(--accent); } .p-ok { color: var(--ink-soft); } .p-warn, .p-stop { color: var(--ink); }
 
-.stats-label { margin-top: 48px; margin-bottom: 14px; font: 500 0.75rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
-.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.stat { padding: 20px 22px; border-radius: 16px; min-width: 0; }
-.stat b { display: block; font-family: var(--font-display); font-size: 2.4rem; font-weight: 600; line-height: 1; }
-.stat span { display: block; margin-top: 10px; color: var(--ink-soft); font-size: 0.92rem; }
+
+/* Globe beside the stats: plain three.js, drag to turn, slow spin */
+.globe-block { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: center; margin-top: 48px; }
+.globe { position: relative; margin: 0; aspect-ratio: 1; min-width: 0; max-height: 520px; justify-self: center; width: 100%; max-width: 520px; touch-action: pan-y; cursor: grab; }
+.globe.dragging { cursor: grabbing; }
+.globe canvas { position: absolute; inset: 0 0 24px; width: 100%; height: calc(100% - 24px); display: block; opacity: 0; transition: opacity 1.2s ease; }
+.globe.ready canvas { opacity: 1; }
+.globe figcaption { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font: 0.72rem/1.4 var(--font-mono); color: var(--ink-soft); }
+/* Globe markers: round project logos on pins, placed over the canvas every frame */
+.gm-layer { position: absolute; inset: 0 0 24px; pointer-events: none; overflow: visible; }
+.gm { position: absolute; left: 0; top: 0; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; overflow: visible; pointer-events: auto; cursor: pointer;
+  opacity: 0; visibility: hidden; transition: opacity 0.15s ease-out, visibility 0s linear 0.15s; will-change: transform; }
+.gm.on { opacity: 1; visibility: visible; transition: opacity 0.15s ease-out; }
+.gm img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #171717; box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.45); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.gm:hover img, .gm:focus-visible img { transform: scale(1.25); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5), 0 10px 20px -4px rgba(0, 0, 0, 0.5); }
+.gm:focus-visible { outline: none; }
+.gm-tip { position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%); white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s ease;
+  font: 500 0.75rem/1.35 var(--font-body); color: var(--ink); background: var(--sheet); border: 1px solid var(--glass-edge); border-radius: 8px; padding: 6px 10px;
+  box-shadow: 0 0 0 1px var(--glass-ring), 0 10px 24px -12px var(--glass-shadow); text-align: center; }
+.gm-tip small { display: block; font: 0.7rem var(--font-mono); color: var(--ink-soft); }
+.gm:hover .gm-tip, .gm:focus-visible .gm-tip { opacity: 1; }
+.gm:hover, .gm:focus-visible { z-index: 2; }
+.globe-block.noglobe { grid-template-columns: minmax(0, 1fr); }
+.globe-block.noglobe .globe { display: none; }
+@media (max-width: 900px) {
+  .globe-block { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .globe { order: -1; max-width: 400px; margin-bottom: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .globe canvas { transition: none; } }
 
 .faq { display: grid; gap: 12px; max-width: 880px; }
 .faq details { border-radius: 14px; padding: 0 22px; }
@@ -296,27 +312,96 @@ th, td { border-bottom-color: var(--glass-edge); }
 .faq details[open] summary::after { transform: rotate(45deg); }
 .faq details p { padding: 0 0 20px; color: var(--ink-soft); max-width: 46em; }
 
-.start-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; max-width: 880px; }
-.start-list li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 14px 14px 20px; border-radius: 14px; }
-.start-list .what { display: block; font-weight: 500; }
-.start-list code { display: block; margin-top: 2px; color: var(--ink-soft); overflow-x: auto; white-space: nowrap; }
-.copy.sm { border: 0; border-radius: 9px; padding: 9px 14px; }
 
 @media (max-width: 900px) {
-  .steps { grid-template-columns: minmax(0, 1fr); }
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (prefers-reduced-motion: reduce) { .step { transition: none; } .step:hover { transform: none; } }
-section[id] { scroll-margin-top: 72px; }
-@media (max-width: 720px) {
-  .nav a:not(.nav-cta):not(.gh), .nav .ver { display: none; }
-  .top .wrap { flex-wrap: nowrap; }
+section[id] { scroll-margin-top: 88px; }
+@media (max-width: 900px) {
+  .menu-btn { display: grid; }
+  .nav { gap: 10px; }
+  .nav-links { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; padding: 8px; border-radius: 14px;
+    background: var(--sheet); border: 1px solid var(--glass-edge); box-shadow: 0 0 0 1px var(--glass-ring), 0 18px 40px -18px var(--glass-shadow); }
+  .nav-links.open { display: flex; }
+  .nav-links a { padding: 11px 12px; border-radius: 9px; font-size: 1rem; color: var(--ink); }
+  .nav-links a:hover { background: var(--code-bg); }
+  .nav-links .ver { align-self: flex-start; margin: 6px 12px 4px; }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .top, .install, .sheet, .facts, .table-box, .snippet, .btn, .chip-btn, .cmdrow, .ver,
-  .step, .stat, .faq details, .start-list li { background: var(--sheet); }
+  .top, .sheet, .facts, .table-box, .btn, .chip-btn, .ver,
+  .card, .faq details, .inst { background: var(--sheet); }
 }
+
+
+/* Condensed layout: hero holds the pitch plus install tabs and one stat; then two command cards,
+   the policy table with the globe, and a short FAQ. */
+.hero-copy { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 24rem); gap: 36px 56px; align-items: end; }
+.hero-copy > * { max-width: none; }
+.hero-main > * { max-width: 40rem; }
+.hero-main .lede { max-width: 36em; }
+.hero-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.inst { border-radius: 14px; overflow: hidden; background: var(--glass-strong); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--glass-ring), 0 18px 40px -22px var(--glass-shadow); }
+.inst-tabs { display: flex; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--glass-edge); }
+.inst-tab { font: 500 0.8rem var(--font-body); border: 0; background: none; color: var(--ink-soft); padding: 11px 10px 10px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.inst-tab:hover { color: var(--ink); }
+.inst-tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.inst-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 0 18px; }
+.inst-dots { display: flex; gap: 6px; }
+.inst-dots i { width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; }
+.inst-dots i + i { background: #febc2e; } .inst-dots i + i + i { background: #28c840; }
+.inst-copy { font: 500 0.78rem var(--font-body); border: 1px solid transparent; background: none; color: var(--ink-soft); padding: 4px 8px; border-radius: 7px; cursor: pointer; }
+.inst-copy:hover { color: var(--ink); border-color: var(--glass-edge); background: var(--glass); }
+.inst-cmd { margin: 0; padding: 12px 18px 4px; font: 500 0.9rem/1.55 var(--font-mono); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.inst-cmd code { font-size: inherit; }
+.inst-cmd code::before { content: "$ "; color: var(--accent); }
+.inst-note { padding: 4px 18px 16px; font-size: 0.86rem; line-height: 1.5; color: var(--ink-soft); }
+.inst-note code { color: var(--ink); font-size: 0.85em; }
+.hero-stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 20px; }
+.hero-stat { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: var(--ink); padding-left: 4px; }
+.hero-stat[hidden] { display: none; }
+.hero-stat b { display: flex; align-items: center; gap: 8px; font: 600 2.2rem/1 var(--font-display); white-space: nowrap; }
+.hero-stat.dl b { color: var(--hero-accent); font-variant-numeric: tabular-nums; }
+.hero-stat.dl b svg { width: 20px; height: 20px; flex: none; }
+.hero-stat span { font: 500 0.72rem/1.4 var(--font-mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-soft); max-width: 17em; }
+.hero-stat:hover > span { color: var(--ink); }
+.hero-stat b span { font: inherit; letter-spacing: 0; text-transform: none; color: inherit; max-width: none; }
+
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.card { padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card-k { font: 500 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); }
+.card h3 { font-size: var(--step-2); font-weight: 600; }
+.card h3 code { font-size: 0.86em; font-weight: 500; color: var(--accent); }
+.card-p { color: var(--ink-soft); }
+.card .sheet { margin-top: 4px; }
+.card .out { max-height: 300px; }
+.card .mini { margin-top: 4px; }
+.also { font-size: 0.92rem; color: var(--ink-soft); }
+.also code { color: var(--ink); }
+.tags { list-style: none; margin: auto 0 0; padding: 6px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tags li { font: 0.72rem/1.4 var(--font-mono); padding: 3px 9px; border-radius: 999px; border: 1px solid var(--glass-edge); background: var(--glass); color: var(--ink-soft); }
+
+.hero-bg.nogl canvas { display: none; }
+#policies .globe-block { grid-template-columns: minmax(0, 1fr) minmax(0, 320px); gap: 40px; margin: 0 0 24px; }
+#policies .globe { max-width: 320px; }
+.sec-head.stack { grid-template-columns: minmax(0, 1fr); gap: 12px; margin-bottom: 24px; }
+.show-all { font: 500 var(--step--1) var(--font-body); border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.show-all:hover { border-color: var(--ink); }
+.show-all[hidden] { display: none; }
+.table-foot { align-items: center; }
+
+.faq { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; align-items: start; }
+.faq-more { margin-top: 18px; font-size: var(--step--1); color: var(--ink-soft); }
+section.band > .wrap { padding-block: 56px; }
+
+@media (max-width: 900px) {
+  .hero-copy { grid-template-columns: minmax(0, 1fr); }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  #policies .globe-block { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  #policies .globe { order: 0; max-width: 300px; }
+  .faq { grid-template-columns: minmax(0, 1fr); }
+}
+
 </style>
 </head>
 <body>
@@ -324,78 +409,62 @@ section[id] { scroll-margin-top: 72px; }
   <div class="wrap">
     <a class="brand" href="#">contrib<span>OS</span></a>
     <nav class="nav" aria-label="Main">
-      <a href="#demo">Demo</a>
-      <a href="#how">How it works</a>
-      <a href="#policies">AI policies</a>
-      <a href="#agents">For agents</a>
-      <a href="#faq">FAQ</a>
-      <a class="gh" href="https://github.com/adityatiwari101104/contribos">GitHub</a>
-      <span class="ver">v0.2.3</span>
-      <a class="nav-cta" href="#start">Get started</a>
+      <div class="nav-links" id="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#policies">AI policies</a>
+        <a href="#install" data-inst="mcp">For agents</a>
+        <a href="#faq">FAQ</a>
+        <a class="gh" href="https://github.com/adityatiwari101104/contribos">GitHub</a>
+        <span class="ver">v0.2.3</span>
+      </div>
+      <a class="nav-cta" href="#install" data-inst="pip">Get started</a>
+      <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open menu"><span></span></button>
     </nav>
   </div>
 </header>
 
 <main>
   <section class="hero">
-    <div class="wrap">
-      <div>
+    <div class="hero-bg" id="stage" aria-hidden="true"><canvas id="scene"></canvas></div>
+    <span class="scale scale-t" aria-hidden="true"></span>
+    <span class="scale scale-b" aria-hidden="true"></span>
+    <span class="scale scale-l" aria-hidden="true"></span>
+    <span class="scale scale-r" aria-hidden="true"></span>
+
+    <div class="wrap hero-copy">
+      <div class="hero-main">
         <p class="eyebrow">Open-source contribution, AI era</p>
         <h1>Read the <mark>house rules</mark> before you open the PR.</h1>
         <p class="contrast">Your agent reads the code. <strong>ContribOS reads the rules.</strong></p>
         <p class="lede">It reads a repository's contributing guide, PR template, AI policy and history, and tells you and your coding agent what the maintainers expect. Every rule cites the file and line it came from.</p>
         <div class="cta">
-          <div class="install">
-            <code id="install-cmd">pip install contribos</code>
-            <button class="copy" id="copy-btn" type="button" aria-label="Copy install command">Copy</button>
-          </div>
+          <a class="btn-primary" href="#how">See real output <span class="dotbox" aria-hidden="true"><span class="dots"></span></span></a>
           <a class="btn" href="https://github.com/adityatiwari101104/contribos">View on GitHub</a>
         </div>
         <p class="never">It never opens pull requests, posts comments or claims issues for you. It points, and you decide. Python 3.10+, zero dependencies, MIT.</p>
       </div>
 
-      <div class="stage" id="stage" aria-hidden="true">
-        <canvas id="scene"></canvas>
-        <p class="stage-cap">Illustration: rules found across a repo's files, each tied to its line, collected into one brief.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="band" id="demo">
-    <div class="wrap">
-      <div class="sec-head">
-        <p class="eyebrow">Real output</p>
-        <div>
-          <h2>What it prints for Django and Flask</h2>
-          <p>Trimmed output of <code>contribos policy</code>, version 0.2.3. Each highlighted citation opens that line on GitHub at the commit we read.</p>
+      <aside class="hero-side" id="install" aria-label="Install">
+        <div class="inst">
+          <div class="inst-tabs" role="tablist" aria-label="How to use it">
+            <button class="inst-tab" role="tab" type="button" id="inst-pip" data-k="pip" aria-selected="true" aria-controls="inst-panel">pip</button>
+            <button class="inst-tab" role="tab" type="button" id="inst-mcp" data-k="mcp" aria-selected="false" aria-controls="inst-panel" tabindex="-1">Claude Code</button>
+            <button class="inst-tab" role="tab" type="button" id="inst-rules" data-k="rules" aria-selected="false" aria-controls="inst-panel" tabindex="-1">Agent rules</button>
+          </div>
+          <div class="inst-body" id="inst-panel" role="tabpanel" aria-labelledby="inst-pip">
+            <div class="inst-bar"><span class="inst-dots" aria-hidden="true"><i></i><i></i><i></i></span><button class="inst-copy" id="copy-btn" type="button" aria-label="Copy command">Copy</button></div>
+            <pre class="inst-cmd"><code id="install-cmd">pip install contribos</code></pre>
+            <p class="inst-note" id="install-note">Then run <code>contribos policy owner/repo</code> for the repo you want to contribute to. No account, no API key.</p>
+          </div>
         </div>
-      </div>
-      <div class="sheet" aria-label="Example output">
-        <div class="sheet-head" role="tablist" aria-label="Example repository">
-          <button class="tab" role="tab" id="tab-django" aria-selected="true" aria-controls="out-django" type="button">django/django</button>
-          <button class="tab" role="tab" id="tab-flask" aria-selected="false" aria-controls="out-flask" type="button">pallets/flask</button>
-          <span class="sheet-note">Real output, v0.2.3, trimmed.</span>
+        <div class="hero-stats">
+          <a class="hero-stat dl" id="dl-stat" href="https://pepy.tech/projects/contribos" hidden>
+            <b><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"/></svg><span id="dl-count"></span></b>
+            <span>downloads on PyPI since launch</span>
+          </a>
+          <a class="hero-stat" href="#policies"><b>9 of 11</b><span>popular repos we checked have written AI rules</span></a>
         </div>
-        <pre class="out" id="out-django" role="tabpanel" aria-labelledby="tab-django"></pre>
-        <pre class="out" id="out-flask" role="tabpanel" aria-labelledby="tab-flask" hidden></pre>
-      </div>
-    </div>
-  </section>
-
-  <section class="band" id="why">
-    <div class="wrap">
-      <div class="sec-head">
-        <p class="eyebrow">Why</p>
-        <div>
-          <h2>AI made pull requests cheap. Maintainers wrote rules.</h2>
-          <p>Agents can open a PR in minutes, so projects now spell out what they accept: disclose AI use, no unattended agents, claim the issue first, tests and changelog entries. The rules are spread across files nobody reads at the right moment. ContribOS reads them for you.</p>
-        </div>
-      </div>
-      <div class="facts">
-        <div class="fact"><b>9 of 11</b><span>popular repos we checked have written AI rules</span></div>
-        <div class="fact"><b>4</b><span>reject autonomous or "pure agent" pull requests</span></div>
-        <div class="fact"><b>1</b><span>does not accept outside pull requests at all</span></div>
-      </div>
+      </aside>
     </div>
   </section>
 
@@ -404,67 +473,66 @@ section[id] { scroll-margin-top: 72px; }
       <div class="sec-head">
         <p class="eyebrow">How it works</p>
         <div>
-          <h2>Read the rules, plan the change, check it before you push.</h2>
-          <p>Everything that can run offline does. Repos are cloned once and cached. <a class="more" href="https://github.com/adityatiwari101104/contribos#readme">Read the README ›</a></p>
+          <h2>Read the rules before you code. Check your branch before you push.</h2>
+          <p>Projects now spell out what they accept: disclose AI use, no unattended agents, claim the issue first, tests and changelog entries. ContribOS finds those rules and checks your work against them. <a class="more" href="https://github.com/adityatiwari101104/contribos#readme">Read the README ›</a></p>
         </div>
       </div>
-      <div class="steps">
-        <article class="step">
-          <p class="num">01</p>
-          <h3>Policy</h3>
-          <p>Finds the AI policy, disclosure format, claim-first, tests and changelog rules, and quotes each with its file and line.</p>
-          <div class="mini">
-            <p class="mini-cap">django/django, real output</p>
-            <div class="mini-row"><span>AI use<small>pull_request_template.md:10</small></span><span class="pill p-info">Disclose</span></div>
-            <div class="mini-row"><span>Claim the ticket<small>contributing.txt:566</small></span><span class="pill p-info">First</span></div>
-            <div class="mini-row"><span>Tests<small>contributing.txt:283</small></span><span class="pill p-info">Expected</span></div>
+      <div class="cards">
+        <article class="card">
+          <p class="card-k">Before you code</p>
+          <h3><code>contribos policy</code></h3>
+          <p class="card-p">Finds the AI policy, disclosure format, claim-first, tests and changelog rules, and quotes each one with its file and line.</p>
+          <div class="sheet" id="demo" aria-label="Example output">
+            <div class="sheet-head" role="tablist" aria-label="Example repository">
+              <button class="tab" role="tab" id="tab-django" aria-selected="true" aria-controls="out-django" type="button">django/django</button>
+              <button class="tab" role="tab" id="tab-flask" aria-selected="false" aria-controls="out-flask" type="button">pallets/flask</button>
+              <span class="sheet-note">Real output, v0.2.3, trimmed</span>
+            </div>
+            <pre class="out" id="out-django" role="tabpanel" aria-labelledby="tab-django"></pre>
+            <pre class="out" id="out-flask" role="tabpanel" aria-labelledby="tab-flask" hidden></pre>
           </div>
-          <code class="ex">contribos policy owner/repo</code>
+          <ul class="tags"><li>every rule cites file:line</li><li>links open the exact commit</li><li>repos cloned once, then cached</li></ul>
         </article>
-        <article class="step">
-          <p class="num">02</p>
-          <h3>Brief</h3>
-          <p>For one issue: which files to read and why, similar past PRs, related tests, and the questions a reviewer will likely ask.</p>
-          <div class="mini">
-            <p class="mini-cap">What a brief lists</p>
-            <div class="mini-row"><span>Files to read, with a reason</span><span class="pill p-info">Read</span></div>
-            <div class="mini-row"><span>Similar merged PRs</span><span class="pill p-info">Compare</span></div>
-            <div class="mini-row"><span>Likely reviewer questions</span><span class="pill p-info">Prepare</span></div>
-          </div>
-          <code class="ex">contribos brief &lt;issue-url&gt;</code>
-        </article>
-        <article class="step">
-          <p class="num">03</p>
-          <h3>Check</h3>
-          <p>Reviews your branch before you submit: scope against past changes, tests, changelog, sign-off and AI-disclosure trailers.</p>
+        <article class="card">
+          <p class="card-k">Before you push</p>
+          <h3><code>contribos check</code></h3>
+          <p class="card-p">Reviews your branch against what the maintainers asked for: scope compared with past changes, tests, changelog, sign-off and AI-disclosure trailers.</p>
           <div class="mini">
             <p class="mini-cap">Example branch</p>
-            <div class="mini-row"><span>Tests changed</span><span class="pill p-ok">Pass</span></div>
-            <div class="mini-row"><span>Changelog entry</span><span class="pill p-warn">Missing</span></div>
-            <div class="mini-row"><span>AI disclosure</span><span class="pill p-stop">Required</span></div>
+            <div class="mini-row"><span>Scope<small>similar to past merged PRs</small></span><span class="pill p-ok">Pass</span></div>
+            <div class="mini-row"><span>Tests changed<small>repo expects tests</small></span><span class="pill p-ok">Pass</span></div>
+            <div class="mini-row"><span>Changelog entry<small>CHANGES.rst</small></span><span class="pill p-warn">Missing</span></div>
+            <div class="mini-row"><span>AI disclosure<small>PR template</small></span><span class="pill p-stop">Required</span></div>
           </div>
-          <code class="ex">contribos check --pr-draft pr.md</code>
+          <p class="also">Starting on an issue? <code>contribos brief &lt;issue-url&gt;</code> lists the files to read, similar merged PRs and the questions a reviewer will likely ask.</p>
+          <ul class="tags"><li>0 runtime dependencies</li><li>59 tests in CI</li><li>8 tools for MCP agents</li><li>never posts for you</li></ul>
         </article>
-      </div>
-
-      <p class="stats-label">Open source today</p>
-      <div class="stats">
-        <div class="stat"><b>0</b><span>runtime dependencies</span></div>
-        <div class="stat"><b>59</b><span>tests run in CI</span></div>
-        <div class="stat"><b>8</b><span>tools for MCP agents</span></div>
-        <div class="stat"><b>0</b><span>PRs or comments posted for you</span></div>
       </div>
     </div>
   </section>
 
   <section class="band" id="policies">
     <div class="wrap">
-      <div class="sec-head">
-        <p class="eyebrow">AI policies, checked by hand</p>
-        <div>
-          <h2>What 11 popular repos say about AI contributions</h2>
-          <p>We ran ContribOS on each repo, then read every cited file ourselves. Each source link opens the exact lines at the commit we read.</p>
+      <div class="globe-block" id="globe-block">
+        <div class="globe-copy">
+          <div class="sec-head stack">
+            <p class="eyebrow">AI policies, checked by hand</p>
+            <div>
+              <h2>What 11 popular repos say about AI contributions</h2>
+              <p>We ran ContribOS on each repo, then read every cited file ourselves. Each source link opens the exact lines at the commit we read.</p>
+            </div>
+          </div>
+          <div class="facts">
+            <div class="fact"><b>9 of 11</b><span>have written AI rules</span></div>
+            <div class="fact"><b>4</b><span>reject "pure agent" PRs</span></div>
+            <div class="fact"><b>1</b><span>takes no outside PRs</span></div>
+          </div>
         </div>
+        <figure class="globe">
+          <canvas id="globe" aria-hidden="true"></canvas>
+          <div class="gm-layer" id="globe-markers"></div>
+          <figcaption>Drag to turn. Pins: where four of these projects are based. Imagery: NASA Blue Marble.</figcaption>
+        </figure>
       </div>
       <div class="filters" role="group" aria-label="Filter by stance">
         <button class="chip-btn" type="button" data-filter="all" aria-pressed="true">All 11</button>
@@ -481,33 +549,9 @@ section[id] { scroll-margin-top: 72px; }
         </table>
       </div>
       <div class="table-foot">
+        <button class="show-all" id="show-all" type="button" aria-expanded="false" aria-controls="policy-rows">Show all 11</button>
         <span>Snapshot: 11 Oct 2026. Rules change, so check the repo before contributing.</span>
         <a href="https://gist.github.com/adityatiwari101104/3fcc0fccf7c3a739d468d95b53260891">Full table as a gist</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="band" id="agents">
-    <div class="wrap">
-      <div class="sec-head">
-        <p class="eyebrow">For coding agents</p>
-        <div>
-          <h2>Give your agent the rules before it writes code.</h2>
-        </div>
-      </div>
-      <div class="agent">
-        <div>
-          <p>ContribOS runs as an MCP server, so Claude Code, Cursor, Codex and other agents can call <code>policy</code>, <code>brief</code>, <code>setup</code>, <code>check</code>, <code>review</code>, <code>claim</code>, <code>find</code> and <code>tone</code> directly.</p>
-          <p class="ink"><code>agent-rules</code> writes a local skill for your agent with the repo's rules, plus hooks that stop it opening PRs or posting comments on its own. Nothing is committed to the repo.</p>
-          <p class="ink">Listed on the official MCP Registry and in awesome-mcp-servers.</p>
-        </div>
-        <div class="snippet" aria-label="Setup commands">
-          <span class="line"><span class="c"># add the MCP server to Claude Code</span></span>
-          <span class="line">claude mcp add contribos -- python -m contribos mcp</span>
-          <span class="line"> </span>
-          <span class="line"><span class="c"># or teach an agent this repo's rules</span></span>
-          <span class="line">contribos agent-rules . --ai "Claude Code"</span>
-        </div>
       </div>
     </div>
   </section>
@@ -519,48 +563,20 @@ section[id] { scroll-margin-top: 72px; }
         <div><h2>Questions, answered.</h2></div>
       </div>
       <div class="faq">
-        <details open>
-          <summary>Does ContribOS open pull requests or post comments for me?</summary>
-          <p>No. It never opens PRs, posts comments or claims issues. It reads and points; you decide and act. The hooks that <code>agent-rules</code> writes exist to stop an agent doing those things on its own.</p>
-        </details>
         <details>
-          <summary>Where do the rules come from?</summary>
-          <p>From the repo itself: contributing guides, PR and issue templates, AI policy files, docs pages and recent git history. Each finding quotes its file and line, so you can check it in one click.</p>
+          <summary>Does it open pull requests or post comments for me?</summary>
+          <p>No. It never opens PRs, posts comments or claims issues. It reads and points; you decide and act. The hooks that <code>agent-rules</code> writes exist to stop an agent doing those things on its own.</p>
         </details>
         <details>
           <summary>Does it send my code anywhere?</summary>
           <p>ContribOS has no server of its own. It clones public repos from GitHub and caches them on your machine, and some commands read issue data from the GitHub API. Your own code stays local.</p>
         </details>
         <details>
-          <summary>What if a repo has no written AI policy?</summary>
-          <p>It says so instead of guessing, as with Flask in the demo above, and suggests disclosing AI use anyway as a courtesy.</p>
-        </details>
-        <details>
           <summary>How accurate is it?</summary>
-          <p>It reads rules with text patterns, not a language model, so unusual wording can slip past it. That is why every rule links to its source. In our 11-repo check, version 0.2.3 gets 10 right; uv's org-wide policy, which lives in a separate repo, is still open as <a href="https://github.com/adityatiwari101104/contribos/issues/10">issue #10</a>.</p>
-        </details>
-        <details>
-          <summary>Can I contribute?</summary>
-          <p>Yes. Hacktoberfest issues are open, and outside contributors have already had PRs merged. <a class="more" href="https://github.com/adityatiwari101104/contribos/issues">See open issues ›</a></p>
+          <p>It reads rules with text patterns, so unusual wording can slip past it. That is why every rule links to its source. In our 11-repo check, version 0.2.3 gets 10 right; uv's org-wide policy, which lives in a separate repo, is still open as <a href="https://github.com/adityatiwari101104/contribos/issues/10">issue #10</a>.</p>
         </details>
       </div>
-    </div>
-  </section>
-
-  <section class="band" id="start">
-    <div class="wrap">
-      <div class="sec-head">
-        <p class="eyebrow">Get started</p>
-        <div>
-          <h2>Try it on the repo you want to contribute to.</h2>
-          <p>Python 3.10 or newer. No account, no API key.</p>
-        </div>
-      </div>
-      <ol class="start-list">
-        <li><span class="num">01</span><div><span class="what">Install</span><code>pip install contribos</code></div><button class="copy sm" type="button" data-copy="pip install contribos">Copy</button></li>
-        <li><span class="num">02</span><div><span class="what">Read the repo's rules</span><code>contribos policy owner/repo</code></div><button class="copy sm" type="button" data-copy="contribos policy owner/repo">Copy</button></li>
-        <li><span class="num">03</span><div><span class="what">Check your branch before the PR</span><code>contribos check --pr-draft pr.md</code></div><button class="copy sm" type="button" data-copy="contribos check --pr-draft pr.md">Copy</button></li>
-      </ol>
+      <p class="faq-more">More in the <a href="https://github.com/adityatiwari101104/contribos#readme">README</a>. Want to help? <a href="https://github.com/adityatiwari101104/contribos/issues">Open issues are welcome</a>.</p>
     </div>
   </section>
 </main>
@@ -650,6 +666,18 @@ section[id] { scroll-margin-top: 72px; }
   }
   render("django"); render("flask");
 
+  // Mobile menu: the nav links fold into a dropdown under the floating bar
+  var menuBtn = document.getElementById("menu-btn"), navLinks = document.getElementById("nav-links");
+  function setMenu(open) {
+    navLinks.classList.toggle("open", open);
+    menuBtn.setAttribute("aria-expanded", String(open));
+    menuBtn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  }
+  menuBtn.addEventListener("click", function () { setMenu(menuBtn.getAttribute("aria-expanded") !== "true"); });
+  navLinks.addEventListener("click", function (e) { if (e.target.closest("a")) setMenu(false); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && navLinks.classList.contains("open")) { setMenu(false); menuBtn.focus(); } });
+  document.addEventListener("click", function (e) { if (!e.target.closest(".top")) setMenu(false); });
+
   var tabs = [document.getElementById("tab-django"), document.getElementById("tab-flask")];
   tabs.forEach(function (t) {
     t.addEventListener("click", function () {
@@ -661,23 +689,50 @@ section[id] { scroll-margin-top: 72px; }
     });
   });
 
-  // Copy install command
-  var btn = document.getElementById("copy-btn"), cmd = document.getElementById("install-cmd");
+  // Install card in the hero: three tabs share one command box
+  var INST = {
+    pip: { cmd: "pip install contribos", note: 'Then run <code>contribos policy owner/repo</code> for the repo you want to contribute to. No account, no API key.' },
+    mcp: { cmd: "claude mcp add contribos -- python -m contribos mcp", note: "Your agent can then call <code>policy</code>, <code>brief</code>, <code>check</code> and five more tools itself. Also works with Cursor and Codex; listed on the official MCP Registry." },
+    rules: { cmd: 'contribos agent-rules . --ai "Claude Code"', note: "Writes a local skill with this repo's rules, plus hooks that stop your agent opening PRs or posting comments on its own. Nothing is committed." }
+  };
+  var instTabs = Array.prototype.slice.call(document.querySelectorAll(".inst-tab"));
+  var btn = document.getElementById("copy-btn"), cmd = document.getElementById("install-cmd"), note = document.getElementById("install-note"), panel = document.getElementById("inst-panel");
+  function setInst(k, focus) {
+    instTabs.forEach(function (t) {
+      var on = t.dataset.k === k;
+      t.setAttribute("aria-selected", String(on)); t.tabIndex = on ? 0 : -1;
+      if (on) { panel.setAttribute("aria-labelledby", t.id); if (focus) t.focus(); }
+    });
+    cmd.textContent = INST[k].cmd; note.innerHTML = INST[k].note; btn.textContent = "Copy";
+  }
+  instTabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { setInst(t.dataset.k); });
+    t.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      e.preventDefault();
+      setInst(instTabs[(i + (e.key === "ArrowRight" ? 1 : -1) + instTabs.length) % instTabs.length].dataset.k, true);
+    });
+  });
+  // "Get started" and "For agents" links open the matching tab
+  Array.prototype.forEach.call(document.querySelectorAll("a[data-inst]"), function (a) {
+    a.addEventListener("click", function () { setInst(a.dataset.inst); });
+  });
   btn.addEventListener("click", function () {
     var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1600); };
     var fallback = function () { var r = document.createRange(); r.selectNodeContents(cmd); var s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = "Selected"; };
     try { navigator.clipboard.writeText(cmd.textContent).then(done, fallback); } catch (e) { fallback(); }
   });
 
-  // Copy buttons in the quickstart list
-  Array.prototype.forEach.call(document.querySelectorAll(".copy[data-copy]"), function (b) {
-    b.addEventListener("click", function () {
-      var text = b.getAttribute("data-copy");
-      var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1600); };
-      var fallback = function () { var c = b.previousElementSibling.querySelector("code"); var r = document.createRange(); r.selectNodeContents(c); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected"; };
-      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
-    });
-  });
+  // Live download count, read from pepy.tech's badge. If it can't be read, the stat stays hidden.
+  fetch("https://static.pepy.tech/personalized-badge/contribos?units=none&left_text=downloads")
+    .then(function (r) { return r.ok ? r.text() : ""; })
+    .then(function (svg) {
+      var m = svg.match(/>([\d,]+)<\/text>/), n = m ? parseInt(m[1].replace(/,/g, ""), 10) : 0;
+      if (!n) return;
+      document.getElementById("dl-count").textContent = n.toLocaleString("en-US");
+      document.getElementById("dl-stat").hidden = false;
+    })
+    .catch(function () {});
 
   // AI-policy survey, verified by hand (snapshot 11 Oct 2026)
   var STANCE = { none: "No AI rule", understand: "Understand it", disclose: "Disclose", agents: "No agents", closed: "Closed to PRs" };
@@ -722,262 +777,377 @@ section[id] { scroll-margin-top: 72px; }
     tbody.appendChild(tr);
   });
 
+  // Short by default: four rows (the projects pinned on the globe) until "Show all 11"; a filter shows every match
+  var FEATURED = { "django/django": 1, "curl/curl": 1, "huggingface/transformers": 1, "tldraw/tldraw": 1 };
+  var filter = "all", expanded = false, showAll = document.getElementById("show-all");
+  function applyRows() {
+    Array.prototype.forEach.call(tbody.children, function (tr) {
+      var match = filter === "all" || tr.dataset.stance === filter;
+      tr.hidden = !(match && (filter !== "all" || expanded || FEATURED[tr.dataset.repo]));
+    });
+    showAll.hidden = filter !== "all";
+    showAll.textContent = expanded ? "Show fewer" : "Show all 11";
+    showAll.setAttribute("aria-expanded", String(expanded));
+  }
+  Array.prototype.forEach.call(tbody.children, function (tr, i) { tr.dataset.repo = rows[i].repo; });
+  showAll.addEventListener("click", function () { expanded = !expanded; applyRows(); });
   var chips = Array.prototype.slice.call(document.querySelectorAll(".chip-btn"));
   chips.forEach(function (c) {
     c.addEventListener("click", function () {
-      var f = c.dataset.filter;
+      filter = c.dataset.filter;
       chips.forEach(function (o) { o.setAttribute("aria-pressed", o === c ? "true" : "false"); });
-      Array.prototype.forEach.call(tbody.children, function (tr) { tr.hidden = !(f === "all" || tr.dataset.stance === f); });
+      applyRows();
     });
   });
+  applyRows();
 })();
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-/* Hero scene: five repo files, a reading line scans each, cited lines light up,
-   and a thread carries each citation into one brief. */
+/* Hero background: a water surface in plain WebGL. A small height field is stepped with the
+   wave equation; the mouse pushes into it along its path, and the waves spread and fade.
+   The screen shader lights those waves like liquid chrome and lets them refract a calm
+   contour pattern. Runs at 60fps while the mouse is active and 30fps at rest, pauses off
+   screen, and shows one still frame without ripples for reduced motion. */
 (function () {
   var stage = document.getElementById("stage"), canvas = document.getElementById("scene");
-  if (!stage) return;
-  function noGL() { stage.classList.add("nogl"); stage.parentNode.classList.add("flat"); }
-  if (!window.THREE) { noGL(); return; }
-  var renderer;
-  try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true }); }
-  catch (e) { noGL(); return; }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(0x000000, 0);
+  if (!stage || !canvas) return;
+  function noGL() { stage.classList.add("nogl"); }
+  var gl = canvas.getContext("webgl", { alpha: true, antialias: false, depth: false, stencil: false });
+  if (!gl) { noGL(); return; }
 
-  var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
-  var BASE_Z = 15, dist = BASE_Z;
+  var HI = "#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n";
+  var VS = "attribute vec2 a; void main() { gl_Position = vec4(a, 0.0, 1.0); }";
+  var SIM = HI + [
+    "uniform sampler2D uS; uniform vec2 uTx, uA, uB; uniform float uAmt, uAsp;",
+    "void main() {",
+    "  vec2 uv = gl_FragCoord.xy * uTx;",
+    "  vec4 s = texture2D(uS, uv);",
+    "  float avg = 0.25 * (texture2D(uS, uv + vec2(uTx.x, 0.0)).r + texture2D(uS, uv - vec2(uTx.x, 0.0)).r",
+    "    + texture2D(uS, uv + vec2(0.0, uTx.y)).r + texture2D(uS, uv - vec2(0.0, uTx.y)).r);",
+    "  float v = (s.g + (avg - s.r) * 0.5) * 0.955;",
+    "  float h = (s.r + v) * 0.97;",
+    "  vec2 ap = (uv - uA) * vec2(uAsp, 1.0), ab = (uB - uA) * vec2(uAsp, 1.0);",
+    "  float t = clamp(dot(ap, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);",
+    "  vec2 d = ap - ab * t;",
+    "  h -= uAmt * exp(-dot(d, d) / 0.0014);",
+    "  gl_FragColor = vec4(h, v, 0.0, 1.0);",
+    "}"
+  ].join("\n");
+  var MAIN = HI + [
+    "uniform sampler2D uH; uniform vec2 uRes, uE; uniform float uT, uMax, uHas; uniform vec3 uCol;",
+    "float h(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }",
+    "float n(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);",
+    "  return mix(mix(h(i), h(i + vec2(1.0, 0.0)), f.x), mix(h(i + vec2(0.0, 1.0)), h(i + vec2(1.0, 1.0)), f.x), f.y); }",
+    "float fbm(vec2 p) { float v = 0.0, a = 0.5; mat2 m = mat2(0.8, 0.6, -0.6, 0.8);",
+    "  for (int i = 0; i < 3; i++) { v += a * n(p); p = m * p * 2.03; a *= 0.5; } return v; }",
+    "void main() {",
+    "  vec2 s = gl_FragCoord.xy / uRes;",
+    "  vec2 w = uHas * vec2(texture2D(uH, s - vec2(uE.x, 0.0)).r - texture2D(uH, s + vec2(uE.x, 0.0)).r,",
+    "                       texture2D(uH, s - vec2(0.0, uE.y)).r - texture2D(uH, s + vec2(0.0, uE.y)).r);",
+    "  vec2 p = ((gl_FragCoord.xy - 0.5 * uRes) / uRes.y + w * 1.4) * 1.5;",
+    "  vec2 q = vec2(fbm(p + vec2(0.0, uT * 0.05)), fbm(p + vec2(5.2, 1.3) - uT * 0.04));",
+    "  vec2 r = vec2(fbm(p + 3.2 * q + vec2(1.7, 9.2) + uT * 0.03), fbm(p + 3.2 * q + vec2(8.3, 2.8)));",
+    "  float f = fbm(p + 3.4 * r);",
+    "  float band = 1.0 - abs(sin(f * 22.0));",
+    "  float base = pow(band, 9.0) * smoothstep(0.32, 0.62, f + 0.25 * length(r - 0.5)) + 0.18 * smoothstep(0.45, 0.8, f);",
+    "  vec3 N = normalize(vec3(w * 7.0, 1.0));",
+    "  float spec = pow(max(dot(N, normalize(vec3(-0.45, 0.55, 0.7))), 0.0), 26.0);",
+    "  float rim = smoothstep(0.05, 0.55, length(w) * 7.0);",
+    "  float a = clamp(base * 0.34 + spec * 1.3 + rim * (0.22 + 0.5 * band), 0.0, 1.0) * uMax;",
+    "  gl_FragColor = vec4(uCol * a, a);",
+    "}"
+  ].join("\n");
+
+  function shader(type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; }
+  function program(fsSrc, names) {
+    var vs = shader(gl.VERTEX_SHADER, VS), fs = shader(gl.FRAGMENT_SHADER, fsSrc);
+    if (!vs || !fs) return null;
+    var p = gl.createProgram(); gl.attachShader(p, vs); gl.attachShader(p, fs); gl.bindAttribLocation(p, 0, "a"); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
+    var U = {}; names.forEach(function (k) { U[k] = gl.getUniformLocation(p, k); });
+    return { p: p, U: U };
+  }
+  var main = program(MAIN, ["uH", "uRes", "uE", "uT", "uMax", "uHas", "uCol"]);
+  if (!main) { noGL(); return; }
   var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
-  var HL = new THREE.Color("#f2d24b");
 
-  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
-  function rng(seed) { var s = seed; return function () { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; }
-  function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
-  function ease(x) { x = clamp01(x); return x * x * (3 - 2 * x); }
-  function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.clearColor(0, 0, 0, 0);
 
-  // Sheet texture geometry (pixels) and world size
-  var SW = 3, SH = 3.9, TW = 512, TH = 666, TOP = 92, BOT = 24;
-  // Frosted fill: translucent sheet colour plus a light sheen from the top-left corner
-  function glassFill(g, w, h, a) {
-    g.clearRect(0, 0, w, h);
-    g.globalAlpha = a; g.fillStyle = cssVar("--sheet"); g.fillRect(0, 0, w, h); g.globalAlpha = 1;
-    var sheen = g.createLinearGradient(0, 0, w * 0.7, h * 0.7);
-    sheen.addColorStop(0, cssVar("--glass-hi")); sheen.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = sheen; g.fillRect(0, 0, w, h);
+  // The wave field needs a float render target. Without one the page keeps the calm pattern.
+  var sim = null, A = null, B = null, SW = 320, SH = 200, floatType = 0, linear = false;
+  function target(w, h) {
+    var tex = gl.createTexture(), fb = gl.createFramebuffer(), f = linear ? gl.LINEAR : gl.NEAREST;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, floatType, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    var ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    if (ok) gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return ok ? { tex: tex, fb: fb } : null;
   }
-  function lx(px) { return (px / TW - 0.5) * SW; }
-  function ly(py) { return (0.5 - py / TH) * SH; }
-
-  var FILES = [
-    { name: "CONTRIBUTING.md", start: 1, rows: 22, hits: [5, 14], seed: 3 },
-    { name: "pull_request_template.md", start: 1, rows: 18, hits: [10, 13], seed: 7 },
-    { name: "AI_POLICY.md", start: 1, rows: 24, hits: [5, 21], seed: 11 },
-    { name: "docs/contributing.txt", start: 556, rows: 22, hits: [564, 566], seed: 19 },
-    { name: "git log (last 200)", start: 1, rows: 20, hits: [6, 15], seed: 23 }
-  ];
-  var BRIEF = ["Add tests with the change", "Disclose AI use in the PR", "No autonomous agents", "Claim the issue first", "Keep scope like past PRs"];
-
-  FILES.forEach(function (f) {
-    var r = rng(f.seed), rowH = (TH - TOP - BOT) / f.rows;
-    f.rowH = rowH; f.layout = [];
-    for (var i = 0; i < f.rows; i++) {
-      var n = f.start + i, hit = f.hits.indexOf(n) >= 0;
-      var indent = r() < 0.25 ? 24 : 0, blank = r() < 0.12 && !hit;
-      var w = blank ? 0 : Math.round((hit ? 0.62 + r() * 0.2 : 0.25 + r() * 0.6) * 360);
-      f.layout.push({ n: n, hit: hit, y: TOP + (i + 0.5) * rowH, x: 80 + indent, w: w, h: Math.max(6, rowH * 0.36) });
+  function makeTargets() { A = target(SW, SH); B = target(SW, SH); return !!(A && B); }
+  if (!reduce) {
+    var half = gl.getExtension("OES_texture_half_float");
+    gl.getExtension("EXT_color_buffer_half_float");
+    if (half) { floatType = half.HALF_FLOAT_OES; linear = !!gl.getExtension("OES_texture_half_float_linear"); }
+    if (!floatType || !makeTargets()) {
+      if (gl.getExtension("OES_texture_float")) {
+        gl.getExtension("WEBGL_color_buffer_float");
+        floatType = gl.FLOAT; linear = !!gl.getExtension("OES_texture_float_linear");
+        if (!makeTargets()) floatType = 0;
+      } else floatType = 0;
     }
-  });
-
-  function drawSheet(f) {
-    var c = f.canvas || (f.canvas = document.createElement("canvas"));
-    c.width = TW; c.height = TH;
-    var g = c.getContext("2d"), soft = cssVar("--ink-soft");
-    glassFill(g, TW, TH, 0.55);
-    g.strokeStyle = cssVar("--glass-edge"); g.lineWidth = 4; g.strokeRect(2, 2, TW - 4, TH - 4);
-    g.textBaseline = "middle"; g.textAlign = "left";
-    g.fillStyle = cssVar("--ink"); g.font = '500 24px "IBM Plex Mono", ui-monospace, monospace';
-    g.fillText(f.name, 28, 46);
-    g.fillStyle = cssVar("--rule"); g.fillRect(28, 74, TW - 56, 2);
-    g.font = '400 13px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = "right";
-    f.layout.forEach(function (row) {
-      g.fillStyle = soft;
-      g.globalAlpha = 0.75; g.fillText(String(row.n), 64, row.y);
-      if (row.w) { g.globalAlpha = row.hit ? 0.6 : 0.26; rr(g, row.x, row.y - row.h / 2, row.w, row.h, row.h / 2); g.fill(); }
-      g.globalAlpha = 1;
-    });
+    if (floatType) sim = program(SIM, ["uS", "uTx", "uA", "uB", "uAmt", "uAsp"]);
   }
 
-  // Brief card texture
-  var CTW = 512, CTH = 420, CW = 2.8, CH = CW * CTH / CTW, BOX = 24, ROW0 = 134, ROWSTEP = 56;
-  function cx(px) { return (px / CTW - 0.5) * CW; }
-  function cy(py) { return (0.5 - py / CTH) * CH; }
-  var cardCanvas = document.createElement("canvas"); cardCanvas.width = CTW; cardCanvas.height = CTH;
-  function drawCard() {
-    var g = cardCanvas.getContext("2d");
-    glassFill(g, CTW, CTH, 0.8);
-    g.strokeStyle = cssVar("--accent"); g.lineWidth = 6; g.strokeRect(3, 3, CTW - 6, CTH - 6);
-    g.textBaseline = "middle"; g.textAlign = "left";
-    g.fillStyle = cssVar("--ink"); g.font = '500 28px "IBM Plex Mono", ui-monospace, monospace';
-    g.fillText("brief.md", 30, 52);
-    g.fillStyle = cssVar("--ink-soft"); g.font = '400 15px "IBM Plex Mono", ui-monospace, monospace'; g.textAlign = "right";
-    g.fillText("5 rules · 10 citations", CTW - 30, 54); g.textAlign = "left";
-    g.fillStyle = cssVar("--rule"); g.fillRect(30, 88, CTW - 60, 2);
-    BRIEF.forEach(function (t, i) {
-      var y = ROW0 + i * ROWSTEP;
-      g.strokeStyle = cssVar("--ink-soft"); g.lineWidth = 2; rr(g, 30, y - BOX / 2, BOX, BOX, 4); g.stroke();
-      g.fillStyle = cssVar("--ink"); g.font = '400 22px "IBM Plex Sans", system-ui, sans-serif';
-      g.fillText(t, 72, y + 1);
-    });
+  var ptr = { x: 0, y: 0, px: 0, py: 0, seen: false, amt: 0 }, lastMove = -1e9, nextDrop = 2000;
+  var visible = true, raf = 0, last = 0, start = performance.now(), col = [0, 0, 0], maxA = 0.9;
+
+  function step(ax, ay, bx, by, amt) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, B.fb);
+    gl.viewport(0, 0, SW, SH);
+    gl.useProgram(sim.p);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, A.tex);
+    gl.uniform1i(sim.U.uS, 0); gl.uniform2f(sim.U.uTx, 1 / SW, 1 / SH);
+    gl.uniform2f(sim.U.uA, ax, ay); gl.uniform2f(sim.U.uB, bx, by);
+    gl.uniform1f(sim.U.uAmt, amt); gl.uniform1f(sim.U.uAsp, SW / SH);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    var t = A; A = B; B = t;
   }
-
-  var group = new THREE.Group(); scene.add(group);
-  var planeGeo = new THREE.PlaneGeometry(SW, SH);
-  var shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1, depthWrite: false });
-  var maxAniso = renderer.capabilities.getMaxAnisotropy();
-
-  FILES.forEach(function (f, s) {
-    drawSheet(f);
-    f.tex = new THREE.CanvasTexture(f.canvas); f.tex.anisotropy = maxAniso;
-    var mesh = new THREE.Mesh(planeGeo, new THREE.MeshBasicMaterial({ map: f.tex, transparent: true, depthWrite: false }));
-    mesh.renderOrder = s * 3 + 1;
-    mesh.position.set(-2.5 + s * 0.95, 1.05 - s * 0.24, -2.4 + s * 0.62);
-    mesh.rotation.set(-0.05, 0.38, 0);
-    group.add(mesh);
-    var sh = new THREE.Mesh(planeGeo, shadowMat); sh.position.set(0.08, -0.1, -0.03); sh.renderOrder = s * 3; mesh.add(sh);
-    var scan = new THREE.Mesh(new THREE.PlaneGeometry(SW * 0.92, 0.03), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
-    scan.position.z = 0.014; scan.renderOrder = s * 3 + 2; mesh.add(scan);
-    f.mesh = mesh; f.scan = scan; f.hl = [];
-    f.layout.forEach(function (row) {
-      if (!row.hit) return;
-      var w = (row.w + 16) / TW * SW, h = f.rowH * 0.84 / TH * SH;
-      var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: HL, transparent: true, opacity: 0, depthWrite: false }));
-      m.position.set(lx(row.x - 8) + w / 2, ly(row.y), 0.012);
-      m.renderOrder = s * 3 + 2; mesh.add(m);
-      f.hl.push({ mesh: m, w: w, frac: (row.y - TOP) / (TH - TOP - BOT) });
-    });
-  });
-
-  drawCard();
-  var cardTex = new THREE.CanvasTexture(cardCanvas); cardTex.anisotropy = maxAniso;
-  var card = new THREE.Mesh(new THREE.PlaneGeometry(CW, CH), new THREE.MeshBasicMaterial({ map: cardTex, transparent: true, depthWrite: false }));
-  card.renderOrder = 30;
-  card.position.set(1.75, -2.0, 2.7); card.rotation.set(-0.04, -0.2, 0);
-  group.add(card);
-  var csh = new THREE.Mesh(new THREE.PlaneGeometry(CW, CH), shadowMat); csh.position.set(0.08, -0.1, -0.03); csh.renderOrder = 29; card.add(csh);
-  var dotGeo = new THREE.PlaneGeometry(BOX / CTW * CW * 0.62, BOX / CTW * CW * 0.62);
-  var cardDots = BRIEF.map(function (t, i) {
-    var d = new THREE.Mesh(dotGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
-    d.position.set(cx(30 + BOX / 2), cy(ROW0 + i * ROWSTEP), 0.012);
-    d.renderOrder = 31; card.add(d); return d;
-  });
-
-  // Threads from each cited line to its row in the brief
-  scene.updateMatrixWorld(true);
-  var SEGS = 64, RAD = 6, threads = [];
-  FILES.forEach(function (f, s) {
-    f.hl.forEach(function (h) {
-      var a = h.mesh.localToWorld(new THREE.Vector3(h.w / 2, 0, 0));
-      var b = card.localToWorld(new THREE.Vector3(-CW / 2 - 0.02, cy(ROW0 + s * ROWSTEP), 0));
-      var mid = a.clone().lerp(b, 0.5); mid.z += 1.2; mid.x = Math.min(a.x, b.x) - 0.9; mid.y = (a.y + b.y) / 2;
-      var geo = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, mid, b), SEGS, 0.014, RAD, false);
-      var mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthTest: false, depthWrite: false });
-      var tube = new THREE.Mesh(geo, mat); tube.renderOrder = 10; tube.frustumCulled = false;
-      geo.setDrawRange(0, 0);
-      group.add(tube);
-      threads.push({ tube: tube, h: h, perSeg: geo.index.count / SEGS });
-    });
-  });
-
-  // Timeline (seconds, looping)
-  var T = 10.5;
-  FILES.forEach(function (f, s) {
-    f.t0 = 0.4 + s * 0.65; f.dur = 2.4;
-    f.hl.forEach(function (h) { h.tLit = f.t0 + f.dur * h.frac; h.tArrive = h.tLit + 0.2 + 1.1; });
-    f.tDone = Math.max.apply(null, f.hl.map(function (h) { return h.tArrive; }));
-  });
-
-  function frame(t) {
-    var fade = 1 - ease((t - 9.4) / 0.9);
-    FILES.forEach(function (f, s) {
-      var p = (t - f.t0) / f.dur;
-      f.scan.material.opacity = (p > 0 && p < 1) ? 0.9 * Math.min(1, p * 8, (1 - p) * 8) : 0;
-      f.scan.position.y = ly(TOP + clamp01(p) * (TH - TOP - BOT));
-      f.hl.forEach(function (h) { h.mesh.material.opacity = 0.72 * ease((t - h.tLit) / 0.25) * fade; });
-      var d = ease((t - f.tDone) / 0.3);
-      cardDots[s].material.opacity = d * fade;
-      cardDots[s].scale.setScalar(0.4 + 0.6 * d);
-    });
-    threads.forEach(function (th) {
-      var p = ease((t - th.h.tLit - 0.2) / 1.1);
-      th.tube.geometry.setDrawRange(0, Math.floor(p * SEGS) * th.perSeg);
-      th.tube.material.opacity = 0.85 * fade;
-    });
+  function draw(t) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(main.p);
+    gl.uniform2f(main.U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(main.U.uT, t); gl.uniform1f(main.U.uMax, maxA);
+    gl.uniform3f(main.U.uCol, col[0], col[1], col[2]);
+    gl.uniform1f(main.U.uHas, sim ? 1 : 0);
+    gl.uniform2f(main.U.uE, 1 / SW, 1 / SH);
+    if (sim) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, A.tex); gl.uniform1i(main.U.uH, 0); }
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
-
-  var pointer = { x: 0, y: 0 }, cam = { x: 0, y: 0 };
-  window.addEventListener("pointermove", function (e) {
-    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
-    pointer.y = -((e.clientY / window.innerHeight) * 2 - 1);
-  }, { passive: true });
-
-  function place(now, snap) {
-    var tx = pointer.x * 1.4 + (reduce ? 0 : Math.sin(now * 0.00022) * 0.5), ty = pointer.y * 0.8;
-    if (snap) { cam.x = tx; cam.y = ty; } else { cam.x += (tx - cam.x) * 0.05; cam.y += (ty - cam.y) * 0.05; }
-    camera.position.set(cam.x, 0.6 + cam.y, dist);
-    camera.lookAt(0, -0.35, 0);
+  function retheme() {
+    var hex = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim().replace("#", "");
+    var v = parseInt(hex, 16), r = (v >> 16) & 255;
+    col = [r / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
+    draw(reduce ? 40 : (performance.now() - start) / 1000);
   }
-
   function resize() {
     var w = canvas.clientWidth, h = canvas.clientHeight;
     if (!w || !h) return;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    dist = BASE_Z * Math.max(1, 1.0 / camera.aspect);
-    camera.updateProjectionMatrix();
+    var scale = Math.min(1, 960 / w); // soft shapes survive being drawn small and scaled up
+    canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+    if (sim) {
+      var sh = Math.max(64, Math.round(SW * h / w));
+      if (sh !== SH) { SH = sh; makeTargets(); }
+    }
+    draw(reduce ? 40 : (performance.now() - start) / 1000);
   }
-
-  function renderStatic() { pointer.x = pointer.y = 0; place(0, true); frame(8.6); renderer.render(scene, camera); }
-
-  var visible = true, start = performance.now(), raf = 0;
   function tick(now) {
     raf = 0;
     if (!visible || document.hidden) return;
-    place(now, false);
-    frame(((now - start) / 1000) % T);
-    renderer.render(scene, camera);
     raf = requestAnimationFrame(tick);
+    var active = now - lastMove < 4000;
+    if (!active && now - last < 33) return;
+    last = now;
+    if (sim) {
+      var amt = ptr.amt; ptr.amt = 0;
+      step(ptr.px, ptr.py, ptr.x, ptr.y, amt);
+      ptr.px = ptr.x; ptr.py = ptr.y;
+      // A slow random drop keeps the surface alive when nobody is moving the mouse
+      if (!active && now > nextDrop) { nextDrop = now + 2400 + Math.random() * 2600; var dx = 0.45 + Math.random() * 0.5, dy = 0.3 + Math.random() * 0.6; step(dx, dy, dx, dy, 0.06); }
+      else step(ptr.x, ptr.y, ptr.x, ptr.y, 0);
+    }
+    draw((now - start) / 1000);
   }
-  function kick() { if (reduce) { renderStatic(); return; } if (!raf && visible && !document.hidden) raf = requestAnimationFrame(tick); }
+  function kick() { if (!reduce && !raf && visible && !document.hidden) raf = requestAnimationFrame(tick); }
 
-  function retheme() {
-    var acc = new THREE.Color(cssVar("--accent")), ok = new THREE.Color(cssVar("--ok"));
-    FILES.forEach(function (f) { drawSheet(f); f.tex.needsUpdate = true; f.scan.material.color.copy(acc); });
-    drawCard(); cardTex.needsUpdate = true;
-    threads.forEach(function (th) { th.tube.material.color.copy(acc); });
-    cardDots.forEach(function (d) { d.material.color.copy(ok); });
-    var hsl = {}; new THREE.Color(cssVar("--paper")).getHSL(hsl);
-    shadowMat.opacity = hsl.l < 0.4 ? 0.3 : 0.06;
-    if (reduce) renderStatic();
-  }
+  if (sim) window.addEventListener("pointermove", function (e) {
+    var r = stage.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+    var x = (e.clientX - r.left) / r.width, y = 1 - (e.clientY - r.top) / r.height;
+    if (!ptr.seen) { ptr.seen = true; ptr.px = x; ptr.py = y; }
+    var dx = (x - ptr.x) * r.width / r.height, dy = y - ptr.y;
+    ptr.x = x; ptr.y = y;
+    ptr.amt = Math.min(0.14, ptr.amt + 0.045 + Math.sqrt(dx * dx + dy * dy) * 0.9);
+    lastMove = performance.now();
+  }, { passive: true });
 
   resize(); retheme();
-  if (window.ResizeObserver) new ResizeObserver(function () { resize(); if (reduce) renderStatic(); }).observe(stage);
-  else window.addEventListener("resize", function () { resize(); if (reduce) renderStatic(); });
-  if ("IntersectionObserver" in window) {
-    new IntersectionObserver(function (es) { visible = es[0].isIntersecting; kick(); }).observe(stage);
-  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage); else window.addEventListener("resize", resize);
+  if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; kick(); }).observe(stage);
   document.addEventListener("visibilitychange", kick);
-  var mq = window.matchMedia && matchMedia("(prefers-color-scheme: dark)");
-  if (mq && mq.addEventListener) mq.addEventListener("change", retheme);
-  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(retheme);
+  canvas.addEventListener("webglcontextlost", function (e) { e.preventDefault(); noGL(); });
   kick();
 })();
 </script>
+<script>
+/* Globe: textured Earth with bump terrain, a fresnel rim glow and a slow spin.
+   Plain three.js (the r128 build loaded above). Textures load only when the
+   section nears the viewport, and rendering pauses while it is off screen. */
+(function () {
+  var block = document.getElementById("globe-block"), canvas = document.getElementById("globe");
+  if (!block || !canvas) return;
+  var fig = canvas.parentNode;
+  function off() { block.classList.add("noglobe"); }
+  if (!window.THREE) { off(); return; }
+
+  var TEX = "https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg";
+  var BUMP = "https://unpkg.com/three-globe@2.31.0/example/img/earth-topology.png";
+  var R = 2, SPIN = 0.3; // radius and auto-rotate speed (OrbitControls units: 0.3 = one turn per 200s)
+  var reduce = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  var started = false;
+
+  function start() {
+    if (started) return; started = true;
+    var renderer;
+    try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: "high-performance" }); }
+    catch (e) { off(); return; }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+    camera.position.set(0, 0, R * 3.5); camera.lookAt(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    var key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(R * 5, R * 2, R * 5); scene.add(key);
+    var fill = new THREE.DirectionalLight(0x88ccff, 0.45); fill.position.set(-R * 3, R, -R * 2); scene.add(fill);
+
+    var earth = new THREE.Group(); earth.rotation.set(0.22, -1.45, 0); scene.add(earth); // opens on the North Atlantic, between the pins
+    var mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, metalness: 0 });
+    earth.add(new THREE.Mesh(new THREE.SphereGeometry(R, 64, 64), mat));
+
+    // Markers: a pin from the surface up to a round project logo. The pins are 3D and turn
+    // with the globe; the logos are HTML links placed over the canvas each frame.
+    var layer = document.getElementById("globe-markers"), paused = false; // paused: a pin is hovered or focused, so hold the spin
+    var PINS = [
+      { repo: "django/django", org: "django", lat: 38.9717, lng: -95.2353, place: "Lawrence, Kansas", why: "where Django was created" },
+      { repo: "huggingface/transformers", org: "huggingface", lat: 40.7033, lng: -73.9866, place: "Brooklyn, New York", why: "Hugging Face headquarters" },
+      { repo: "tldraw/tldraw", org: "tldraw", lat: 51.5072, lng: -0.1276, place: "London", why: "tldraw headquarters" },
+      { repo: "curl/curl", org: "curl", lat: 59.3293, lng: 18.0686, place: "Stockholm", why: "home of curl's lead maintainer" }
+    ];
+    function latLng(lat, lng, r) {
+      var phi = (90 - lat) * Math.PI / 180, theta = (lng + 180) * Math.PI / 180;
+      return new THREE.Vector3(-r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
+    }
+    var up = new THREE.Vector3(0, 1, 0);
+    PINS.forEach(function (m) {
+      var base = latLng(m.lat, m.lng, R * 1.001), top = latLng(m.lat, m.lng, R * 1.18);
+      var dir = top.clone().sub(base).normalize(), q = new THREE.Quaternion().setFromUnitVectors(up, dir);
+      m.lineMat = new THREE.MeshBasicMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.6 });
+      m.tipMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+      var line = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, top.distanceTo(base), 8), m.lineMat);
+      line.position.copy(base.clone().lerp(top, 0.5)); line.quaternion.copy(q); earth.add(line);
+      var cone = new THREE.Mesh(new THREE.ConeGeometry(0.015, 0.04, 8), m.tipMat);
+      cone.position.copy(base); cone.quaternion.copy(q); earth.add(cone);
+      m.top = top; m.world = new THREE.Vector3();
+
+      var a = document.createElement("a");
+      a.className = "gm"; a.href = "https://github.com/" + m.repo; a.target = "_blank"; a.rel = "noopener";
+      a.setAttribute("aria-label", m.repo + ", " + m.place + " (" + m.why + "), on GitHub");
+      a.tabIndex = -1;
+      var img = document.createElement("img");
+      img.src = "https://github.com/" + m.org + ".png?size=64"; img.alt = ""; img.width = 28; img.height = 28; img.draggable = false; img.loading = "lazy";
+      var tip = document.createElement("span"); tip.className = "gm-tip";
+      tip.appendChild(document.createTextNode(m.repo));
+      var sm = document.createElement("small"); sm.textContent = m.place + " · " + m.why; tip.appendChild(sm);
+      a.appendChild(img); a.appendChild(tip); layer.appendChild(a);
+      function hot(on) { paused = on; m.lineMat.color.set(on ? 0xffffff : 0x94a3b8); m.lineMat.opacity = on ? 0.9 : 0.6; m.tipMat.color.set(on ? 0xf97316 : 0xef4444); draw(); }
+      a.addEventListener("mouseenter", function () { hot(true); });
+      a.addEventListener("mouseleave", function () { hot(false); });
+      a.addEventListener("focus", function () { hot(true); });
+      a.addEventListener("blur", function () { hot(false); });
+      m.el = a;
+    });
+    var camDir = new THREE.Vector3();
+    function placeMarkers() {
+      var w = canvas.clientWidth, h = canvas.clientHeight;
+      earth.updateMatrixWorld(); camDir.copy(camera.position).normalize();
+      PINS.forEach(function (m) {
+        m.world.copy(m.top).applyMatrix4(earth.matrixWorld);
+        var facing = m.world.clone().normalize().dot(camDir) > 0.1; // same cut-off as the source: hide pins on the far side
+        if (facing !== m.on) { m.on = facing; m.el.classList.toggle("on", facing); m.el.tabIndex = facing ? 0 : -1; }
+        var p = m.world.project(camera);
+        m.el.style.transform = "translate(" + ((p.x + 1) / 2 * w).toFixed(1) + "px," + ((1 - p.y) / 2 * h).toFixed(1) + "px)";
+      });
+    }
+    function draw() { renderer.render(scene, camera); placeMarkers(); }
+
+    // Rim glow: back faces of a slightly larger sphere, strongest against the globe and fading to nothing outward
+    var glow = new THREE.ShaderMaterial({
+      uniforms: { atmosphereColor: { value: new THREE.Color("#4da6ff") }, intensity: { value: 0.85 }, fresnelPower: { value: 1.4 } },
+      vertexShader: "varying vec3 vNormal; varying vec3 vPosition; void main() { vNormal = normalize(normalMatrix * normal); vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      fragmentShader: "uniform vec3 atmosphereColor; uniform float intensity; uniform float fresnelPower; varying vec3 vNormal; varying vec3 vPosition; void main() { float f = pow(abs(dot(vNormal, normalize(-vPosition))), fresnelPower); gl_FragColor = vec4(atmosphereColor, f * intensity); }",
+      side: THREE.BackSide, transparent: true, depthWrite: false
+    });
+    var atmo = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 32), glow); atmo.scale.setScalar(1.12); scene.add(atmo);
+
+    var loader = new THREE.TextureLoader(); loader.setCrossOrigin("anonymous");
+    var aniso = renderer.capabilities.getMaxAnisotropy(), pending = 2;
+    function loaded() { if (--pending === 0) { fig.classList.add("ready"); kick(); } }
+    loader.load(TEX, function (t) { t.encoding = THREE.sRGBEncoding; t.anisotropy = Math.min(16, aniso); mat.map = t; mat.needsUpdate = true; loaded(); }, undefined, function () { off(); });
+    loader.load(BUMP, function (t) { t.anisotropy = Math.min(8, aniso); mat.bumpMap = t; mat.bumpScale = 0.05; mat.needsUpdate = true; loaded(); }, undefined, loaded);
+
+    // Drag to turn, with damping; vertical tilt is clamped so the poles never flip
+    var drag = null, vel = { x: 0, y: 0 };
+    fig.addEventListener("pointerdown", function (e) { if (e.target.closest(".gm")) return; drag = { x: e.clientX, y: e.clientY }; fig.classList.add("dragging"); fig.setPointerCapture(e.pointerId); kick(); });
+    fig.addEventListener("pointermove", function (e) {
+      if (!drag) return;
+      var k = 4 / Math.max(1, fig.clientWidth);
+      vel.y = (e.clientX - drag.x) * k; vel.x = (e.clientY - drag.y) * k;
+      earth.rotation.y += vel.y; earth.rotation.x = Math.max(-1.1, Math.min(1.1, earth.rotation.x + vel.x));
+      drag = { x: e.clientX, y: e.clientY };
+    });
+    function endDrag() { drag = null; fig.classList.remove("dragging"); }
+    fig.addEventListener("pointerup", endDrag); fig.addEventListener("pointercancel", endDrag);
+
+    function resize() {
+      var w = canvas.clientWidth, h = canvas.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+      draw();
+    }
+
+    var visible = true, raf = 0, last = 0;
+    function tick(now) {
+      raf = 0;
+      if (!visible || document.hidden) return;
+      var dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
+      if (!drag) {
+        vel.x *= 0.9; vel.y *= 0.9;
+        earth.rotation.y += vel.y; earth.rotation.x = Math.max(-1.1, Math.min(1.1, earth.rotation.x + vel.x));
+        if (!reduce && !paused) earth.rotation.y += dt * (2 * Math.PI / 60) * SPIN;
+      }
+      draw();
+      var moving = drag || Math.abs(vel.x) + Math.abs(vel.y) > 1e-5;
+      if (!reduce || moving) raf = requestAnimationFrame(tick); else last = 0;
+    }
+    function kick() { if (!raf && visible && !document.hidden) { last = 0; raf = requestAnimationFrame(tick); } }
+
+    resize();
+    if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas); else window.addEventListener("resize", resize);
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; kick(); }).observe(fig);
+    document.addEventListener("visibilitychange", kick);
+    kick();
+  }
+
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { io.disconnect(); start(); } }, { rootMargin: "400px 0px" });
+    io.observe(block);
+  } else start();
+})();
+</script>
+
 </body>
 </html>
