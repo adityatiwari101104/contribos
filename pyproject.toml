@@ -13,11 +13,17 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development",
 ]
 
 [project.urls]
-Homepage = "https://github.com/adityatiwari101104/contribos"
+Homepage = "https://contribos-iota.vercel.app/"
+Source = "https://github.com/adityatiwari101104/contribos"
 Issues = "https://github.com/adityatiwari101104/contribos/issues"
 
 [project.scripts]

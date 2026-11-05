@@ -458,9 +458,9 @@ section.band > .wrap { padding-block: 56px; }
           </div>
         </div>
         <div class="hero-stats">
-          <a class="hero-stat dl" id="dl-stat" href="https://pepy.tech/projects/contribos" hidden>
+          <a class="hero-stat dl" id="dl-stat" href="https://pypistats.org/packages/contribos" hidden>
             <b><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"/></svg><span id="dl-count"></span></b>
-            <span>downloads on PyPI since launch</span>
+            <span>PyPI downloads, last 180 days, excluding mirrors</span>
           </a>
           <a class="hero-stat" href="#policies"><b>9 of 11</b><span>popular repos we checked have written AI rules</span></a>
         </div>
@@ -505,7 +505,7 @@ section.band > .wrap { padding-block: 56px; }
             <div class="mini-row"><span>AI disclosure<small>PR template</small></span><span class="pill p-stop">Required</span></div>
           </div>
           <p class="also">Starting on an issue? <code>contribos brief &lt;issue-url&gt;</code> lists the files to read, similar merged PRs and the questions a reviewer will likely ask.</p>
-          <ul class="tags"><li>0 runtime dependencies</li><li>59 tests in CI</li><li>8 tools for MCP agents</li><li>never posts for you</li></ul>
+          <ul class="tags"><li>0 runtime dependencies</li><li>68 tests in CI</li><li>9 tools for MCP agents</li><li>never posts for you</li></ul>
         </article>
       </div>
     </div>
@@ -588,7 +588,7 @@ section.band > .wrap { padding-block: 56px; }
       <a href="https://github.com/adityatiwari101104/contribos">GitHub</a>
       <a href="https://pypi.org/project/contribos/">PyPI</a>
       <a href="https://github.com/punkpeye/awesome-mcp-servers">awesome-mcp-servers</a>
-      <a href="https://github.com/adityatiwari101104/contribos/issues">Hacktoberfest issues</a>
+      <a href="https://github.com/adityatiwari101104/contribos/issues">Open issues</a>
     </nav>
   </div>
 </footer>
@@ -692,7 +692,7 @@ section.band > .wrap { padding-block: 56px; }
   // Install card in the hero: three tabs share one command box
   var INST = {
     pip: { cmd: "pip install contribos", note: 'Then run <code>contribos policy owner/repo</code> for the repo you want to contribute to. No account, no API key.' },
-    mcp: { cmd: "claude mcp add contribos -- python -m contribos mcp", note: "Your agent can then call <code>policy</code>, <code>brief</code>, <code>check</code> and five more tools itself. Also works with Cursor and Codex; listed on the official MCP Registry." },
+    mcp: { cmd: "claude mcp add contribos -- python -m contribos mcp", note: "Your agent can then call <code>policy</code>, <code>brief</code>, <code>check</code> and six more tools itself. Also works with Cursor and Codex; listed on the official MCP Registry." },
     rules: { cmd: 'contribos agent-rules . --ai "Claude Code"', note: "Writes a local skill with this repo's rules, plus hooks that stop your agent opening PRs or posting comments on its own. Nothing is committed." }
   };
   var instTabs = Array.prototype.slice.call(document.querySelectorAll(".inst-tab"));
@@ -723,13 +723,12 @@ section.band > .wrap { padding-block: 56px; }
     try { navigator.clipboard.writeText(cmd.textContent).then(done, fallback); } catch (e) { fallback(); }
   });
 
-  // Live download count, read from pepy.tech's badge. If it can't be read, the stat stays hidden.
-  fetch("https://static.pepy.tech/personalized-badge/contribos?units=none&left_text=downloads")
-    .then(function (r) { return r.ok ? r.text() : ""; })
-    .then(function (svg) {
-      var m = svg.match(/>([\d,]+)<\/text>/), n = m ? parseInt(m[1].replace(/,/g, ""), 10) : 0;
-      if (!n) return;
-      document.getElementById("dl-count").textContent = n.toLocaleString("en-US");
+  // Live download count from our own /api/downloads. If it can't be read, the stat stays hidden.
+  fetch("/api/downloads")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d || !d.downloads) return;
+      document.getElementById("dl-count").textContent = d.downloads.toLocaleString("en-US");
       document.getElementById("dl-stat").hidden = false;
     })
     .catch(function () {});

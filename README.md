@@ -8,6 +8,8 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/contribos.svg)](https://pypi.org/project/contribos/)
 [![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)](https://pypi.org/project/contribos/)
 
+**[Website](https://contribos-iota.vercel.app/)**
+
 **Get trusted. Get merged. Come back.** ContribOS helps new open-source contributors earn trust. It finds where you're welcome, shows how this repo wants the change done, checks that you truly understand your change, coaches you through review, and turns merged PRs into a record the next maintainer can verify.
 
 In 2026, writing code is not the hard part of contributing. AI made PRs cheap, maintainers answered with PR caps, vouch lists and AI policies, and newcomer merge rates fell. ContribOS makes your PR worth a maintainer's time.
@@ -69,10 +71,22 @@ contribos policy pallets/flask
 ## Install
 
 ```sh
-pip install contribos     # Python 3.10+, git. Zero external dependencies.
-export GITHUB_TOKEN=...   # needed for find, claim/brief from an issue URL, review, record
-`policy` also runs without a token, but it skips pull-request signals and says so at the top of its output.
+pip install contribos
 ```
+
+You need Python 3.10+ and git. There are no other dependencies.
+
+Set `GITHUB_TOKEN` for `find`, `claim` or `brief` from an issue URL, `review`, and `record`:
+
+```sh
+export GITHUB_TOKEN=...          # macOS, Linux
+```
+
+```powershell
+$env:GITHUB_TOKEN = "..."        # Windows PowerShell
+```
+
+`policy` also runs without a token, but it skips pull-request signals and says so at the top of its output.
 
 Everything that can run offline does: `policy`, `brief --title`, `claim --title`, `setup`, `check`, `bench` and `review --data` need only `git`. Add `--offline` to skip the API, and `--update` to fetch new commits. Clones and indexes are cached in `~/.cache/contribos` (`CONTRIBOS_CACHE`).
 
@@ -109,7 +123,7 @@ Matching against past PRs barely improves file finding, which supports the plan'
 
 ## Contributing
 
-Contributions are welcome, including for Hacktoberfest. Start with issues labelled `good first issue`, comment on one to claim it, and read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers claiming an issue, disclosing AI use, and running the tests. To see these rules the way ContribOS reads them:
+Contributions are welcome. Start with issues labelled `good first issue`, comment on one to claim it, and read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers claiming an issue, disclosing AI use, and running the tests. To see these rules the way ContribOS reads them:
 
 ```sh
 contribos policy adityatiwari101104/contribos
@@ -121,7 +135,7 @@ contribos policy adityatiwari101104/contribos
 - Tested on real repos (Flask, pytest, Ghostty): `policy`, `brief`, `claim --title`, `setup`, `check`, `bench`, `mcp`.
 - Tested against the live GitHub API on 2026-10-01: `find` (scored issue takeability and maintainer response medians on `maximilianfeix/proxy-scraper` and `brekkylab/backlot`), `claim <url>` (drafted pre-coding proposals with past similar PRs and file targets), and `record` (verified public merged PR portfolio for `@adityatiwari101104`).
 - Tested on temporary git repos: `agent-rules` (git status stays clean, the guard blocks `gh pr create`, the commit-msg hook enforces sign-off and the trailer), `check --verify-test`, `tone`, policy radar v2.
-- Tests: `python -m unittest discover -s tests` (59 tests, CI matrix on Linux, macOS, and Windows).
+- Tests: `python -m unittest discover -s tests` (68 tests, CI matrix on Linux, macOS, and Windows).
 
 ## Releasing
 

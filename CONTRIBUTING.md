@@ -27,7 +27,7 @@ pip install -e .
 python -m unittest discover -s tests
 ```
 
-ContribOS has no runtime dependencies and supports Python 3.10 to 3.13 on Linux, macOS and Windows. Please keep it that way: no new runtime dependencies without discussing it in an issue first.
+ContribOS has no runtime dependencies and supports Python 3.10 to 3.14 on Linux, macOS and Windows. Please keep it that way: no new runtime dependencies without discussing it in an issue first.
 
 Many commands call the GitHub API. Unauthenticated requests are rate-limited, so set `GITHUB_TOKEN` (no scopes needed for public repos) if you hit HTTP 403.
 

@@ -4,6 +4,7 @@
   "description": "Help open-source contributors earn maintainer trust: repo rules, briefs, and pre-submit checks.",
   "version": "0.2.3",
   "repository": {"url": "https://github.com/adityatiwari101104/contribos", "source": "github"},
+  "websiteUrl": "https://contribos-iota.vercel.app/",
   "packages": [
     {
       "registryType": "pypi",
