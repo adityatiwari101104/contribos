@@ -29,11 +29,13 @@ DOC_PATTERNS = [
 TRUST_LISTS = [r"(^|/)vouched\.td$", r"(^|/)vouch(ed)?(\.\w+)?$"]
 CODEOWNERS = r"(^|/)codeowners$"
 # "We are not accepting contributions", "Pull requests are turned off". Conditional rules
-# ("we don't accept PRs without tests") are excluded by the negative lookahead.
+# ("we don't accept PRs without tests", "contributions of AI-generated code", "contributions
+# under the GPL") are excluded by the negative lookahead.
 NOT_ACCEPTING = re.compile(
     r"\b(?:(?:are|is) not (?:currently )?accepting|(?:(?:do|does|will) not|don'?t|doesn'?t|won'?t) (?:currently )?accept|"
     r"no longer accept(?:s|ing)?|not open to)\s+(?:any\s+)?(?:outside |external |community |new |code )?"
-    r"(?:contributions|pull requests|PRs)\b(?!\s+(?:without|that|which|unless|if|for|from)\b)"
+    r"(?:contributions|pull requests|PRs)\b(?!\s+(?:without|that|which|unless|if|for|from|of|under|to|in|on|at|by|with|using|made|"
+    r"written|generated|created|containing|involving|based|produced|authored)\b)"
     r"|\bpull requests (?:are|have been) (?:turned off|disabled)\b", re.I)
 
 AI_WORDS = re.compile(
@@ -56,7 +58,7 @@ RULES = {
     "small": re.compile(r"\b(small|focused|atomic|one (logical )?(change|thing)|single (issue|purpose))"
                         r"\b.{0,40}\b(PRs?|pull requests?|changes?|commits?)", re.I),
     "dco": re.compile(r"(signed-off-by|\bDCO\b|developer certificate of origin|git commit -s)", re.I),
-    "cla": re.compile(r"\b(CLA|contributor license agreement)\b"),
+    "cla": re.compile(r"\b(CLA|(?i:contributor license agreement))\b"),
 }
 STYLE_TOOLS = {
     ".pre-commit-config.yaml": "pre-commit",

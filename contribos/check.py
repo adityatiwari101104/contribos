@@ -28,6 +28,9 @@ CHANGELOG = re.compile(r"(^|/)(changelog|changes|news|history)([./_-]|$)|(^|/)\.
 HUNK_FN = re.compile(r"^@@ [^@]+ @@\s*(?:.*?\b(?:def|class|func|fn|function)\s+)?([A-Za-z_]\w*)")
 
 
+ISSUE_REF = re.compile(r"(?:^|[\s(])(?:[\w.-]+/[\w.-]+)?#\d+\b|/issues/\d+\b")
+
+
 @dataclass
 class Item:
     level: str    # "ok", "warn", "fail"
@@ -133,6 +136,7 @@ def run_checks(diff: DiffInfo, history: list[Change], policy: Policy | None,
     code = [f for f in diff.files if is_code(f)]
     tests = [f for f in diff.files if is_test(f)]
     similar = similar_changes(diff, history)
+    items += check_acceptance(policy)
 
     # Scope versus precedent.
     if similar:
@@ -207,6 +211,39 @@ def run_checks(diff: DiffInfo, history: list[Change], policy: Policy | None,
     return items, similar
 
 
+def check_acceptance(policy: Policy | None) -> list[Item]:
+    """Will this repo take the PR at all? These fail: no amount of polish gets it merged."""
+    if not policy:
+        return []
+    items = []
+    if policy.get("Archived"):
+        items.append(Item("fail", "Repository", "The repository is archived and accepts no PRs."))
+    closed = policy.get("Not accepting contributions")
+    if closed:
+        items.append(Item("fail", "Repository", closed.verdict,
+                          [f"{e.source}: {e.quote}" for e in closed.evidence[:2]]))
+    return items
+
+
+def check_requirements(diff: DiffInfo, policy: Policy | None, issue: int | None) -> list[Item]:
+    """Rules ContribOS can't verify from a branch. Flag them instead of staying silent."""
+    if not policy:
+        return []
+    items = []
+    linked = issue is not None or any(ISSUE_REF.search(f"{subject}\n{body}")
+                                      for _, subject, body in diff.commits)
+    need = policy.get("Issue first") or policy.get("Claim first")
+    if need and not linked:
+        items.append(Item("warn", "Issue first", f"{need.verdict} No issue is linked: pass --issue N "
+                                                 "or reference it in a commit.",
+                          [f"{e.source}: {e.quote}" for e in need.evidence[:1]]))
+    cla = policy.get("CLA")
+    if cla:
+        items.append(Item("warn", "CLA", f"{cla.verdict} ContribOS can't tell whether you have.",
+                          [f"{e.source}: {e.quote}" for e in cla.evidence[:1]]))
+    return items
+
+
 def check_disclosure(diff: DiffInfo, policy: Policy | None, ai_note: str | None) -> Item | None:
     """If you used AI, is it disclosed the way this repo asks?"""
     if not policy:
@@ -228,6 +265,12 @@ def check_disclosure(diff: DiffInfo, policy: Policy | None, ai_note: str | None)
                         f"This repo wants a `{trailer}` line in each commit; {len(missing)} commit(s) lack it.",
                         details + [f"Example: {trailer} {ai_note}", "Add it with: git commit --amend "
                                    "(or git rebase -i for several commits)"])
+    ai = policy.get("AI policy")
+    if ai and ai.verdict.startswith(("Restricts", "Strict")):
+        return Item("warn", "AI disclosure",
+                    "You said you used AI, and this repo restricts it. Disclosing isn't enough: "
+                    "read the quoted lines and confirm your use is allowed before submitting.",
+                    details + [f"{e.source}: {e.quote}" for e in ai.evidence[:2]])
     return Item("warn" if details else "ok", "AI disclosure",
                 "Your AI use will be disclosed in the PR description.", details)
 

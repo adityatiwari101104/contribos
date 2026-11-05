@@ -87,6 +87,9 @@ def _warnings(policy: Policy | None, verdict: IssueVerdict | None, labels: list[
                        f"({rule.evidence[0].source}).")
         if policy.get("Archived"):
             out.append("The repository is archived. It won't accept PRs.")
+        closed = policy.get("Not accepting contributions")
+        if closed:
+            out.append(f"{closed.verdict} ({closed.evidence[0].source})")
         if policy.get("Issue first"):
             out.append("PRs here need a linked, discussed issue first.")
     return out

@@ -24,7 +24,7 @@ import re
 import sys
 from pathlib import Path
 
-from . import bench, brief, check, claim, find, llm, policy, record, review, setup_doctor, tone
+from . import __version__, bench, brief, check, claim, find, llm, policy, record, review, setup_doctor, tone
 from .github import GitHub
 from .precedent import PrecedentIndex
 from .repo import open_repo
@@ -237,6 +237,7 @@ def cmd_check(args) -> int:
     explanation = Path(args.explain).read_text(encoding="utf-8") if args.explain else None
     items, similar = check.run_checks(diff, history, p, explanation)
     title = args.title or check.current_title(repo, diff)
+    items += check.check_requirements(diff, p, args.issue)
     for extra in (check.check_disclosure(diff, p, args.ai),
                   check.check_duplicates(gh, repo, args.issue, title)):
         if extra:
@@ -282,6 +283,7 @@ def main(argv: list[str] | None = None) -> int:
             pass
     ap = argparse.ArgumentParser(prog="contribos", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--version", action="version", version=f"contribos {__version__}")
     ap.add_argument("--update", action="store_true", help="fetch the latest commits first")
     ap.add_argument("--offline", action="store_true", help="don't call the GitHub API")
     sub = ap.add_subparsers(dest="cmd", required=True)
