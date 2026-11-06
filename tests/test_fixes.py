@@ -244,5 +244,188 @@ class ReposThatRefuse(unittest.TestCase):
                 self.assertIn("CLA", self.levels(check.check_requirements(self.diff(), p, None)))
 
 
+class Forks(unittest.TestCase):
+    def repo(self):
+        def run(cwd, *args):
+            subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                           cwd=cwd, check=True, capture_output=True)
+        top = Path(tempfile.mkdtemp(prefix="contribos-fork-"))
+        up = top / "up"
+        up.mkdir()
+        run(up, "init", "-q", "-b", "main")
+        (up / "a.py").write_text("a\n", encoding="utf-8")
+        run(up, "add", "-A")
+        run(up, "commit", "-qm", "base")
+        run(top, "clone", "-q", str(up), "fork")
+        fork = top / "fork"
+        for i in range(5):  # the project moves on; the fork doesn't
+            (up / f"f{i}.py").write_text("x\n", encoding="utf-8")
+            run(up, "add", "-A")
+            run(up, "commit", "-qm", f"up {i}")
+        run(fork, "remote", "set-url", "origin", "https://github.com/me/proj.git")
+        run(fork, "remote", "add", "upstream", str(up))
+        run(fork, "fetch", "-q", "upstream")
+        run(fork, "checkout", "-q", "-b", "feat", "upstream/main")
+        (fork / "mine.py").write_text("mine\n", encoding="utf-8")
+        run(fork, "add", "-A")
+        run(fork, "commit", "-qm", "mine")
+        return fork, run
+
+    def test_diff_is_against_upstream_not_a_stale_fork(self):
+        fork, _ = self.repo()
+        repo = check.Repo("me", "proj", fork)
+        diff = check.read_diff(repo, check.find_base(repo, None))
+        self.assertEqual(diff.files, ["mine.py"])
+        self.assertEqual(len(diff.commits), 1)
+
+    def test_slug_is_the_upstream_project(self):
+        fork, run = self.repo()
+        run(fork, "remote", "set-url", "upstream", "https://github.com/acme/proj.git")
+        self.assertEqual(check.local_repo(str(fork)).slug, "acme/proj")
+
+    def test_no_upstream_uses_origin(self):
+        fork, run = self.repo()
+        run(fork, "remote", "remove", "upstream")
+        self.assertEqual(check.local_repo(str(fork)).slug, "me/proj")
+
+
+class ReviewRequests(unittest.TestCase):
+    def test_polite_requests_are_not_praise(self):
+        from contribos import review
+        for text, kind in (("Thanks for the PR. Please add tests and fix the failing build.", "change"),
+                           ("Nice work, but this breaks Windows and must be fixed before merge.", "blocking"),
+                           ("Looks good, but could you rename this?", "change")):
+            with self.subTest(text=text):
+                self.assertEqual(review.classify(text), kind)
+
+    def test_real_praise_stays_praise(self):
+        from contribos import review
+        for text in ("LGTM", "Thanks!", "Looks good to me.", "Thanks for the fix!", "Nice use of a dict here."):
+            with self.subTest(text=text):
+                self.assertEqual(review.classify(text), "praise")
+
+    def test_review_summary_is_read(self):
+        from contribos import review
+        rv = [{"state": "CHANGES_REQUESTED", "user": {"login": "maint"}, "body": "Thanks, but the build fails.",
+               "submitted_at": "2026-10-01T00:00:00Z"}]
+        items, notes = review.analyze("me", [], [], rv)
+        self.assertEqual(len(items), 1)
+        self.assertFalse(items[0].answered)
+        self.assertTrue(any("still need your reply" in n for n in notes))
+
+    def test_own_and_empty_reviews_are_ignored(self):
+        from contribos import review
+        rv = [{"state": "COMMENTED", "user": {"login": "me"}, "body": "note", "submitted_at": "2026-10-01T00:00:00Z"},
+              {"state": "APPROVED", "user": {"login": "maint"}, "body": "", "submitted_at": "2026-10-01T00:00:00Z"}]
+        self.assertEqual(review.analyze("me", [], [], rv)[0], [])
+
+
+class Cache(unittest.TestCase):
+    def setUp(self):
+        from contribos import repo
+        self.repo = repo
+        self.old = repo.CACHE_DIR
+        repo.CACHE_DIR = Path(tempfile.mkdtemp(prefix="contribos-cache-"))
+        self.path = repo.CACHE_DIR / "repos" / "o__r"
+
+    def tearDown(self):
+        self.repo.CACHE_DIR = self.old
+
+    def clone(self):
+        self.path.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", "-b", "main", str(self.path)], check=True)
+        subprocess.run(["git", "-C", str(self.path), "-c", "user.name=t", "-c", "user.email=t@t",
+                        "commit", "-q", "--allow-empty", "-m", "x"], check=True)
+
+    def age(self, seconds):
+        import os
+        import time
+        marker = self.path / ".git" / "HEAD"
+        then = time.time() - seconds
+        os.utime(marker, (then, then))
+
+    def fetched(self, **kw):
+        from unittest import mock
+        with mock.patch.object(self.repo, "_fetch") as f:
+            self.repo.open_repo("o/r", **kw)
+        return f.called
+
+    def test_old_cache_refreshes(self):
+        self.clone()
+        self.age(2 * self.repo.MAX_AGE)
+        self.assertTrue(self.fetched())
+
+    def test_recent_cache_does_not(self):
+        self.clone()
+        self.assertFalse(self.fetched())
+
+    def test_offline_never_refreshes(self):
+        self.clone()
+        self.age(2 * self.repo.MAX_AGE)
+        self.assertFalse(self.fetched(offline=True))
+
+    def test_failed_refresh_keeps_the_cache(self):
+        from unittest import mock
+        self.clone()
+        self.age(2 * self.repo.MAX_AGE)
+        with mock.patch.object(self.repo, "_fetch", side_effect=RuntimeError("no network")):
+            self.assertEqual(self.repo.open_repo("o/r").path, self.path)
+
+    def test_broken_clone_is_replaced(self):
+        from unittest import mock
+        (self.path / ".git").mkdir(parents=True)
+        (self.path / ".git" / "config").write_text("[core]\n", encoding="utf-8")
+
+        def fake_clone(cmd, **kw):
+            Path(cmd[-1], ".git").mkdir(parents=True)
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+        with mock.patch.object(self.repo.subprocess, "run", side_effect=fake_clone) as run:
+            with mock.patch.object(self.repo, "git", return_value=""):
+                self.repo.open_repo("o/r")
+        self.assertEqual(run.call_args[0][0][1], "clone")
+        self.assertFalse((self.path / ".git" / "config").exists())
+
+
+class RuleFiles(unittest.TestCase):
+    def seen(self, path):
+        return bool(_policy_for({path: "Rules.\n"}).docs)
+
+    def test_common_locations_are_read(self):
+        for path in ("docs/CONTRIBUTE.md", "CONTRIBUTING_GUIDE.md", "docs/contributing/testing.md",
+                     ".github/PULL_REQUEST_TEMPLATE/feature.md", "llvm/docs/AIToolPolicy.md",
+                     "AI_POLICY.md", "docs/intro/contributing.txt", "HACKING"):
+            with self.subTest(path=path):
+                self.assertTrue(self.seen(path))
+
+    def test_other_files_are_not(self):
+        for path in ("tests/fixtures/CONTRIBUTING.md", "src/dev.py", "src/contributing.py",
+                     "CONTRIBUTORS.md", "vendor/x/CONTRIBUTING.md", "examples/app/CONTRIBUTING.md"):
+            with self.subTest(path=path):
+                self.assertFalse(self.seen(path))
+
+    def test_ai_rule_in_a_newly_read_file_is_found(self):
+        p = _policy_for({"docs/CONTRIBUTE.md": "Do not submit AI-generated contributions.\n"})
+        self.assertTrue(p.get("AI policy").verdict.startswith("Restricts"))
+
+
+class ClaimRule(unittest.TestCase):
+    def found(self, text):
+        return _policy_for({"CONTRIBUTING.md": text + "\n"}).get("Claim first") is not None
+
+    def test_real_rules(self):
+        for text in ("Get assigned before you open a PR.", "Comment on the issue first.",
+                     "Learn how to claim tickets for yourself.", "Please claim an issue.",
+                     "Ask before you start working on a feature.", "Discuss it before you start writing code.", "Talk to us before starting work.",
+                     "Open an issue first."):
+            with self.subTest(text=text):
+                self.assertTrue(self.found(text))
+
+    def test_not_a_claim_rule(self):
+        for text in ("Read this file before you start sending patches.",
+                     "Performance claims need benchmarks.", "We never claim copyright."):
+            with self.subTest(text=text):
+                self.assertFalse(self.found(text))
+
+
 if __name__ == "__main__":
     unittest.main()

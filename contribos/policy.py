@@ -17,15 +17,20 @@ from .github import GitHub
 from .precedent import Change
 from .repo import Repo
 
+DOC_EXT = r"(\.(md|markdown|mdx|rst|txt|adoc))?$"
 DOC_PATTERNS = [
-    r"(^|/)contributing(\.\w+)?$",
-    r"(^|/)(ai|llm|genai)[-_ ]?(policy|usage|contributions?|contribution-policy)(\.\w+)?$",
+    r"(^|/)contribut(e|ing)([-_][\w-]*)?" + DOC_EXT,
+    r"(^|/)docs?/contribut(e|ing)/[^/]+" + DOC_EXT,
+    r"(^|/)(ai|llm|genai)[-_ ]?(tools?[-_ ]?)?(policy|usage|contributions?|contribution-policy)" + DOC_EXT,
     r"(^|/)agents\.md$",
     r"(^|/)(claude|copilot-instructions)\.md$",
     r"(^|/)pull_request_template(\.\w+)?$",
-    r"(^|/)code_of_conduct(\.\w+)?$",
-    r"(^|/)(dev(elopment)?|hacking)(\.\w+)?$",
+    r"(^|/)pull_request_template/[^/]+$",
+    r"(^|/)code_of_conduct" + DOC_EXT,
+    r"(^|/)(dev(elopment)?|hacking)" + DOC_EXT,
 ]
+# A CONTRIBUTING.md here belongs to someone else's code or to a test, not to this repo.
+NOT_OURS = re.compile(r"(^|/)(node_modules|vendor|third[-_]party|tests?|testdata|fixtures?|__tests__|examples?)/", re.I)
 TRUST_LISTS = [r"(^|/)vouched\.td$", r"(^|/)vouch(ed)?(\.\w+)?$"]
 CODEOWNERS = r"(^|/)codeowners$"
 # "We are not accepting contributions", "Pull requests are turned off". Conditional rules
@@ -49,8 +54,10 @@ RULES = {
     "ai_understand": re.compile(r"\b(understand|responsib|review(ed)? (it|them|the output)|"
                                 r"human[- ]in[- ]the[- ]loop|able to explain|"
                                 r"explain.{0,40}your own (words|(?:human )?voice))", re.I),
-    "claim": re.compile(r"\b(get assigned|assign(ed)? to you|claim|comment on the issue|"
-                        r"before (you )?(start|begin|work)|open an issue first|discuss (it |this )?"
+    "claim": re.compile(r"\b(get assigned|assign(ed)? to you|claim(ing)? (an? |the |this |your )?"
+                        r"(issues?|tickets?|tasks?|it)\b|comment on the issue|"
+                        r"before (you )?((start|begin)(ning|ing)? (to )?(work\w*|cod\w*|writ\w*|implement\w*|on)\b|work)|"
+                        r"open an issue first|discuss (it |this )?"
                         r"(first|before)|wait for (a )?maintainer)", re.I),
     "tests": re.compile(r"\b(tests? (are|is) required|(add|include|write) (a |new )?"
                         r"(regression )?tests?|must (be )?(covered|tested))", re.I),
@@ -143,8 +150,7 @@ def _ai_sentences(repo: Repo, rev: str, paths: list[str]):
 def analyze(repo: Repo, history: list[Change], rev: str = "HEAD",
             gh: GitHub | None = None) -> Policy:
     files = repo.files(rev)
-    docs = sorted(p for p in files if _match_any(p, DOC_PATTERNS)
-                  and not p.lower().startswith(("node_modules/", "vendor/", "third_party/")))
+    docs = sorted(p for p in files if _match_any(p, DOC_PATTERNS) and not NOT_OURS.search(p))
     policy = Policy(repo.slug, docs=docs)
 
     hits: dict[str, list[Evidence]] = {k: [] for k in RULES}
@@ -185,7 +191,7 @@ def analyze(repo: Repo, history: list[Change], rev: str = "HEAD",
                 continue
             if RULES[key].search(sentence) and len(hits[key]) < 3:
                 hits[key].append(Evidence(f"{path}:{start}-{end}", _quote(sentence)))
-    ai_files = [p for p in docs if re.search(r"(ai|llm|genai)[-_ ]?(policy|usage)", p.lower())]
+    ai_files = [p for p in docs if re.search(r"(ai|llm|genai)[-_ ]?(tools?[-_ ]?)?(policy|usage)", p.lower())]
     if hits["ai_ban"] and hits["ai_disclose"]:
         verdict = ("Strict: some AI use is banned and the rest must be disclosed. "
                    "Read the quoted lines before using AI.")

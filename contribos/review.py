@@ -28,6 +28,9 @@ KINDS = [
                           r"change|revert|split|drop|avoid|prefer)\b", re.I)),
     ("question", re.compile(r"\?\s*$|\b(why|what|how|is there|does this|do we)\b.*\?", re.I | re.S)),
 ]
+# Praise only counts when nothing in the comment asks for anything.
+REQUEST = re.compile(r"\b(please|should|must|could you|can you|would you|needs? to|have to|but|however|"
+                     r"instead|blocker|blocking|breaks|regression|can't merge|cannot merge|won't merge)\b", re.I)
 RULE_HINTS = [
     (re.compile(r"\btests?\b", re.I), "Tests", "This echoes the repo's testing expectation."),
     (re.compile(r"\b(changelog|changes\.rst|news)\b", re.I), "Changelog", "The repo asks for a changelog entry."),
@@ -71,6 +74,8 @@ class ReviewItem:
 def classify(body: str) -> str:
     text = body.strip()
     for kind, rx in KINDS:
+        if kind == "praise" and REQUEST.search(text):
+            continue
         if rx.search(text):
             return kind
     return "change" if text else "praise"
@@ -114,6 +119,19 @@ def analyze(pr_author: str, review_comments: list[dict], issue_comments: list[di
         answered = bool(last_author and last_author > c["created_at"])
         items.append(ReviewItem(c["user"]["login"], c["body"], classify(c["body"]), None, None,
                                 c.get("html_url", ""), c["created_at"], answered))
+
+    # The summary box of a review is often where the real request is.
+    for r in reviews:
+        body = (r.get("body") or "").strip()
+        login = (r.get("user") or {}).get("login")
+        when = r.get("submitted_at")
+        if not body or not when or not login or login == pr_author or r.get("state") in ("DISMISSED", "PENDING"):
+            continue
+        kind = classify(body)
+        if r.get("state") == "CHANGES_REQUESTED" and kind == "praise":
+            kind = "change"
+        items.append(ReviewItem(login, body, kind, None, None, r.get("html_url", ""), when,
+                                bool(last_author and last_author > when)))
 
     notes = []
     changes_requested = [r for r in reviews if r.get("state") == "CHANGES_REQUESTED"]

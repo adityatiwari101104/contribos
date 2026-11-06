@@ -58,16 +58,18 @@ def local_repo(path: str) -> Repo:
     if not git(root, "rev-parse", "--verify", "--quiet", "HEAD", check=False).strip():
         raise RuntimeError(f"{root} has no commits yet. ContribOS reads repo history and rules, so "
                            "clone an existing project (git clone <url>) or make a first commit, then try again.")
-    url = git(root, "remote", "get-url", "origin", check=False).strip()
-    try:
-        owner, name = parse_repo(url)
-    except ValueError:
-        owner, name = "local", root.name
-    return Repo(owner, name, root)
+    # In a fork, `upstream` is the project and `origin` is your copy of it.
+    for remote in ("upstream", "origin"):
+        try:
+            owner, name = parse_repo(git(root, "remote", "get-url", remote, check=False).strip())
+            return Repo(owner, name, root)
+        except ValueError:
+            continue
+    return Repo("local", root.name, root)
 
 
 def find_base(repo: Repo, base: str | None) -> str:
-    candidates = [base] if base else ["origin/HEAD", "upstream/main", "upstream/master",
+    candidates = [base] if base else ["upstream/HEAD", "upstream/main", "upstream/master", "origin/HEAD",
                                       "origin/main", "origin/master", "main", "master"]
     for ref in candidates:
         mb = repo.git("merge-base", "HEAD", ref, check=False).strip()

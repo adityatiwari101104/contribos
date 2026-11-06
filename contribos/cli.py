@@ -30,15 +30,15 @@ from .precedent import PrecedentIndex
 from .repo import open_repo
 
 
-def _load(spec: str, update: bool):
-    repo = open_repo(spec, update=update)
+def _load(spec: str, update: bool, offline: bool = False):
+    repo = open_repo(spec, update=update, offline=offline)
     index = PrecedentIndex(repo)
     index.build()
     return repo, index.changes()
 
 
 def cmd_policy(args) -> int:
-    repo, history = _load(args.repo, args.update)
+    repo, history = _load(args.repo, args.update, args.offline)
     gh = None if args.offline else GitHub()
     p = policy.analyze(repo, history, gh=gh)
     if args.json:
@@ -84,7 +84,7 @@ def _issue_text(args, repo, gh) -> tuple[str, str, str | None, dict | None]:
 
 
 def cmd_brief(args) -> int:
-    repo, history = _load(args.target, args.update)
+    repo, history = _load(args.target, args.update, args.offline)
     gh = None if args.offline else GitHub()
     title, body, url, _ = _issue_text(args, repo, gh)
     p = policy.analyze(repo, history, gh=gh)
@@ -114,7 +114,7 @@ def cmd_brief(args) -> int:
 
 
 def cmd_claim(args) -> int:
-    repo, history = _load(args.target, args.update)
+    repo, history = _load(args.target, args.update, args.offline)
     gh = None if args.offline else GitHub()
     title, body, _, raw = _issue_text(args, repo, gh)
     p = policy.analyze(repo, history, gh=gh)
@@ -213,7 +213,7 @@ def cmd_mcp(args) -> int:
 
 
 def cmd_bench(args) -> int:
-    repo, history = _load(args.repo, args.update)
+    repo, history = _load(args.repo, args.update, args.offline)
     print(f"Replaying {args.n} past changes from {repo.slug} "
           f"(✓ = a changed file in top 5; columns: brief, grep-only)")
     results = bench.run(repo, history, n=args.n)
@@ -265,7 +265,7 @@ def cmd_setup(args) -> int:
     if not args.repo:
         print("Give a repo, or --diagnose <output file>.", file=sys.stderr)
         return 2
-    repo = open_repo(args.repo, update=args.update)
+    repo = open_repo(args.repo, update=args.update, offline=args.offline)
     print(setup_doctor.to_markdown(setup_doctor.plan(repo)))
     return 0
 

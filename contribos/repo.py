@@ -8,11 +8,15 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
+import stat
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 CACHE_DIR = Path(os.environ.get("CONTRIBOS_CACHE", Path.home() / ".cache" / "contribos"))
+MAX_AGE = 24 * 3600  # seconds a cached clone can go unrefreshed: rules change
 
 
 def parse_repo(spec: str) -> tuple[str, str]:
@@ -89,22 +93,59 @@ class Repo:
         return counts
 
 
-def open_repo(spec: str, update: bool = False) -> Repo:
-    """Clone (or reuse) a repository in the local cache."""
+def _remove(path: Path) -> None:
+    """Delete a directory, including git's read-only object files on Windows."""
+    for folder, _, names in os.walk(path):
+        for n in names:
+            os.chmod(os.path.join(folder, n), stat.S_IWRITE)
+    shutil.rmtree(path)
+
+
+def _usable(path: Path) -> bool:
+    """A clone that was interrupted leaves a directory git can't read a commit from."""
+    return bool((path / ".git").exists() or (path / "HEAD").exists()) and bool(
+        git(path, "rev-parse", "--verify", "--quiet", "HEAD", check=False).strip())
+
+
+def _stale(path: Path) -> bool:
+    marker = path / ".git" / "FETCH_HEAD"
+    if not marker.exists():
+        marker = path / ".git" / "HEAD"
+    return not marker.exists() or time.time() - marker.stat().st_mtime > MAX_AGE
+
+
+def _fetch(path: Path) -> None:
+    git(path, "fetch", "--quiet", "origin")
+    git(path, "reset", "--quiet", "--soft", "origin/HEAD", check=False)
+
+
+def open_repo(spec: str, update: bool = False, offline: bool = False) -> Repo:
+    """Clone (or reuse) a repository in the local cache, refreshing it once a day."""
     owner, name = parse_repo(spec)
     path = CACHE_DIR / "repos" / f"{owner}__{name}"
-    if not (path / ".git").exists() and not (path / "HEAD").exists():
+    if path.exists() and not _usable(path):
+        _remove(path)
+    if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
+        # Clone beside the target and rename, so an interrupted clone can't look like a cached repo.
+        partial = path.with_name(f"{path.name}.partial-{os.getpid()}")
         r = subprocess.run(
             ["git", "clone", "--quiet", "--no-checkout",
-             f"https://github.com/{owner}/{name}.git", str(path)],
+             f"https://github.com/{owner}/{name}.git", str(partial)],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},  # a missing repo must fail, not ask for a password
         )
         if r.returncode != 0:
+            if partial.exists():
+                _remove(partial)
             raise RuntimeError(f"Could not clone {owner}/{name}. Check the name, and that the repo is public "
                                f"or your git credentials can read it.\n  git said: {(r.stderr.strip().splitlines() or [''])[-1]}")
+        partial.rename(path)
     elif update:
-        git(path, "fetch", "--quiet", "origin")
-        git(path, "reset", "--quiet", "--soft", "origin/HEAD", check=False)
+        _fetch(path)
+    elif not offline and _stale(path):
+        try:
+            _fetch(path)
+        except RuntimeError:
+            pass  # no network: the cached copy is still better than nothing
     return Repo(owner, name, path)
